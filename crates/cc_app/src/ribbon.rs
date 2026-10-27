@@ -254,7 +254,7 @@ fn tab_font(active: bool) -> egui::FontId {
 }
 
 /// A tab title in a cell of `width`, its text centered.
-fn tab_title(ui: &mut Ui, label: &str, active: bool, width: f32) -> Response {
+fn tab_title(ui: &mut Ui, label: &str, icon: Option<Icon>, active: bool, width: f32) -> Response {
     let color = if active { PALETTE.accent_text } else { PALETTE.text_muted };
     let galley = ui.painter().layout_no_wrap(label.to_string(), tab_font(active), color);
     let (rect, response) = ui.allocate_exact_size(vec2(width, galley.size().y + 12.0), Sense::click());
@@ -263,7 +263,14 @@ fn tab_title(ui: &mut Ui, label: &str, active: bool, width: f32) -> Response {
     }
     response.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, active, label));
     let text_w = galley.size().x;
-    ui.painter().galley(rect.center() - galley.size() / 2.0, galley, color);
+    let icon_w = if icon.is_some() { 20.0 } else { 0.0 };
+    let content_left = rect.center().x - (text_w + icon_w) / 2.0;
+    if let Some(icon) = icon {
+        let icon_rect = egui::Rect::from_min_size(egui::pos2(content_left, rect.center().y - 7.0), vec2(14.0, 14.0));
+        let tones = Tones { ink: color, ..Tones::of(theme::palette(ui.ctx()), None, true, active) };
+        icons::paint_toned(ui.painter(), icon_rect, icon, tones, None);
+    }
+    ui.painter().galley(egui::pos2(content_left + icon_w, rect.center().y - galley.size().y / 2.0), galley, color);
     if active {
         let y = rect.bottom() - 1.0;
         let half = text_w / 2.0 + 4.0;
@@ -374,18 +381,21 @@ pub fn ribbon(ui: &mut Ui, state: &mut AppState) {
     });
     // Ribbon tab titles, all as wide as the widest (measured bold, as when active).
     let tabs = [
-        (RibbonTab::File, t!("ribbon-file")),
-        (RibbonTab::Architecture, t!("ribbon-architecture")),
-        (RibbonTab::Structure, t!("ribbon-structure")),
-        (RibbonTab::Mep, t!("ribbon-mep")),
-        (RibbonTab::Modify, t!("ribbon-modify")),
-        (RibbonTab::Annotate, t!("ribbon-annotate")),
-        (RibbonTab::View, t!("ribbon-view")),
-        (RibbonTab::Manage, t!("ribbon-manage")),
+        (RibbonTab::File, t!("ribbon-file"), None),
+        (RibbonTab::Architecture, t!("ribbon-architecture"), Some(Icon::WorkspaceArchitecture)),
+        (RibbonTab::Visualization, t!("ribbon-visualization"), Some(Icon::WorkspaceVisualization)),
+        (RibbonTab::Presentation, t!("ribbon-presentation"), Some(Icon::WorkspacePresentation)),
+        (RibbonTab::Modify, t!("ribbon-modify"), None),
+        (RibbonTab::Structure, t!("ribbon-structure"), None),
+        (RibbonTab::Mep, t!("ribbon-mep"), None),
+        (RibbonTab::Manage, t!("ribbon-manage"), None),
     ];
     let width = tabs
         .iter()
-        .map(|(_, label)| ui.painter().layout_no_wrap(label.clone(), tab_font(true), PALETTE.text).size().x)
+        .map(|(_, label, icon)| {
+            ui.painter().layout_no_wrap(label.clone(), tab_font(true), PALETTE.text).size().x
+                + if icon.is_some() { 20.0 } else { 0.0 }
+        })
         .fold(0.0, f32::max)
         + 28.0;
     // Narrow windows squeeze the titles, keeping room for the collapse button.
@@ -393,9 +403,9 @@ pub fn ribbon(ui: &mut Ui, state: &mut AppState) {
     let collapsed = state.ribbon_collapsed;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        for (tab, label) in tabs {
+        for (tab, label, icon) in tabs {
             let active = state.ribbon_tab == tab && (!collapsed || state.ribbon_peek);
-            let r = tab_title(ui, &label, active, width);
+            let r = tab_title(ui, &label, icon, active, width);
             // A double click collapses or expands; a click on a collapsed
             // ribbon shows that tab's panel over the views, or hides it again.
             if r.double_clicked() {
@@ -503,11 +513,11 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
                 match state.ribbon_tab {
                     RibbonTab::File => file_tab(ui, state),
                     RibbonTab::Architecture => architecture_tab(ui, state),
+                    RibbonTab::Visualization => visualization_tab(ui, state),
+                    RibbonTab::Presentation => presentation_tab(ui, state),
+                    RibbonTab::Modify => modify_tab(ui, state),
                     RibbonTab::Structure => structure_tab(ui, state),
                     RibbonTab::Mep => mep_tab(ui, state),
-                    RibbonTab::Modify => modify_tab(ui, state),
-                    RibbonTab::Annotate => annotate_tab(ui, state),
-                    RibbonTab::View => view_tab(ui, state),
                     RibbonTab::Manage => manage_tab(ui, state),
                 }
             });
@@ -648,15 +658,6 @@ pub fn dimension_icon(mode: DimensionMode) -> Icon {
     }
 }
 
-fn annotate_tab(ui: &mut Ui, state: &mut AppState) {
-    group(ui, t!("group-dimension"), |ui| {
-        command_buttons(ui, state, &DimensionMode::ALL.map(UiCommand::Dimension));
-    });
-    group(ui, t!("group-text"), |ui| command_buttons(ui, state, &[UiCommand::Text, UiCommand::AddLeader]));
-    group(ui, t!("group-tags"), |ui| command_button(ui, state, UiCommand::StructureTags));
-    group(ui, t!("group-selection"), |ui| command_button(ui, state, UiCommand::Select));
-}
-
 /// The text note selected alone, if any.
 pub fn selected_text(state: &AppState) -> Option<cc_core::ElementId> {
     let [id] = state.selection.iter().copied().collect::<Vec<_>>()[..] else { return None };
@@ -706,7 +707,31 @@ fn clipboard_group(ui: &mut Ui, state: &mut AppState) {
     stacks(ui, state, &[&[UiCommand::Cut, UiCommand::ClipboardCopy, UiCommand::MatchType]]);
 }
 
-fn view_tab(ui: &mut Ui, state: &mut AppState) {
+fn visualization_tab(ui: &mut Ui, state: &mut AppState) {
+    group(ui, t!("group-create-views"), |ui| command_button(ui, state, UiCommand::New3D));
+    group(ui, t!("group-graphics"), |ui| {
+        command_buttons(
+            ui,
+            state,
+            &[UiCommand::Materials, UiCommand::VisibilityGraphics, UiCommand::ViewFilters, UiCommand::ViewTemplates],
+        );
+    });
+    group(ui, t!("group-temporary"), |ui| {
+        use UiCommand::*;
+        stacks(
+            ui,
+            state,
+            &[
+                &[TempHide, TempIsolate, TempReset],
+                &[TempHideCategory, TempIsolateCategory, TempPermanent],
+                &[HideInView, OverrideGraphics],
+            ],
+        );
+    });
+    group(ui, t!("group-navigate"), |ui| command_button(ui, state, UiCommand::ZoomFit));
+}
+
+fn presentation_tab(ui: &mut Ui, state: &mut AppState) {
     let levels: Vec<_> = state.project().levels.iter().map(|l| (l.id, l.name.clone())).collect();
     group(ui, t!("group-create-views"), |ui| {
         for command in [UiCommand::FloorPlan, UiCommand::CeilingPlan] {
@@ -719,7 +744,7 @@ fn view_tab(ui: &mut Ui, state: &mut AppState) {
                 }
             });
         }
-        command_buttons(ui, state, &[UiCommand::New3D, UiCommand::Section]);
+        command_button(ui, state, UiCommand::Section);
         let r = command_menu(ui, state, UiCommand::Elevations);
         egui::Popup::menu(&r).show(|ui| {
             let elevations: Vec<_> =
@@ -743,22 +768,23 @@ fn view_tab(ui: &mut Ui, state: &mut AppState) {
         });
         command_button(ui, state, UiCommand::Sheet);
     });
-    group(ui, t!("group-graphics"), |ui| {
-        command_buttons(ui, state, &[UiCommand::VisibilityGraphics, UiCommand::ViewFilters, UiCommand::ViewTemplates]);
+    group(ui, t!("group-export"), |ui| {
+        stacks(ui, state, &[&[UiCommand::ExportPdf, UiCommand::ExportSvg, UiCommand::ExportImage]]);
     });
-    group(ui, t!("group-temporary"), |ui| {
-        use UiCommand::*;
+    group(ui, t!("group-dimension"), |ui| {
+        use DimensionMode::*;
         stacks(
             ui,
             state,
             &[
-                &[TempHide, TempIsolate, TempReset],
-                &[TempHideCategory, TempIsolateCategory, TempPermanent],
-                &[HideInView, OverrideGraphics],
+                &[UiCommand::Dimension(Aligned), UiCommand::Dimension(Linear), UiCommand::Dimension(Angular)],
+                &[UiCommand::Dimension(Radial), UiCommand::Dimension(Diameter)],
             ],
         );
     });
-    group(ui, t!("group-navigate"), |ui| command_button(ui, state, UiCommand::ZoomFit));
+    group(ui, t!("group-text"), |ui| command_buttons(ui, state, &[UiCommand::Text, UiCommand::AddLeader]));
+    group(ui, t!("group-tags"), |ui| command_button(ui, state, UiCommand::StructureTags));
+    group(ui, t!("group-selection"), |ui| command_button(ui, state, UiCommand::Select));
 }
 
 fn manage_tab(ui: &mut Ui, state: &mut AppState) {

@@ -76,11 +76,11 @@ fn ribbon_snapshots() {
     let tabs = [
         RibbonTab::File,
         RibbonTab::Architecture,
+        RibbonTab::Visualization,
+        RibbonTab::Presentation,
+        RibbonTab::Modify,
         RibbonTab::Structure,
         RibbonTab::Mep,
-        RibbonTab::Modify,
-        RibbonTab::Annotate,
-        RibbonTab::View,
         RibbonTab::Manage,
     ];
     for tab in tabs {
@@ -97,7 +97,7 @@ fn ribbon_snapshots() {
     let mut state = sample_state();
     state.ribbon_collapsed = true;
     state.ribbon_peek = true;
-    state.ribbon_tab = RibbonTab::Annotate;
+    state.ribbon_tab = RibbonTab::Presentation;
     results.add(ribbon_harness_sized(state, egui::vec2(900.0, 220.0)).try_snapshot("ribbon_peek"));
     // The rich tooltip of an unavailable command.
     let mut state = sample_state();
@@ -184,10 +184,10 @@ fn narrow_ribbon_scrolls() {
 #[test]
 fn ribbon_collapses_and_peeks() {
     let mut harness = ribbon_harness_sized(sample_state(), egui::vec2(1100.0, 220.0));
-    let tab = t!("ribbon-annotate");
+    let tab = t!("ribbon-presentation");
     harness.get_by_label(&tab).click();
     harness.run();
-    assert_eq!(harness.state().ribbon_tab, RibbonTab::Annotate);
+    assert_eq!(harness.state().ribbon_tab, RibbonTab::Presentation);
     // The harness clock runs faster than a hand, so allow a slow double click.
     harness.ctx.options_mut(|o| o.input_options.max_double_click_delay = 60.0);
     harness.get_by_label(&tab).click();
@@ -274,11 +274,11 @@ fn ribbon_buttons_are_accessible() {
     let tabs = [
         RibbonTab::File,
         RibbonTab::Architecture,
+        RibbonTab::Visualization,
+        RibbonTab::Presentation,
+        RibbonTab::Modify,
         RibbonTab::Structure,
         RibbonTab::Mep,
-        RibbonTab::Modify,
-        RibbonTab::Annotate,
-        RibbonTab::View,
         RibbonTab::Manage,
     ];
     let mut found = std::collections::HashSet::new();

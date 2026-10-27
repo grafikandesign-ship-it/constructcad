@@ -35,6 +35,8 @@ tab-section = Przekrój: { $name }
 # Wstążka
 ribbon-file = Plik
 ribbon-architecture = Architektura
+ribbon-visualization = Wizualizacja
+ribbon-presentation = Prezentacja
 ribbon-modify = Zmień
 ribbon-view = Widok
 ribbon-manage = Zarządzaj

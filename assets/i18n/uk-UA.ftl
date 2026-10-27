@@ -35,6 +35,8 @@ tab-section = Розріз: { $name }
 # Стрічка
 ribbon-file = Файл
 ribbon-architecture = Архітектура
+ribbon-visualization = Візуалізація
+ribbon-presentation = Презентація
 ribbon-modify = Змінити
 ribbon-view = Вид
 ribbon-manage = Керування

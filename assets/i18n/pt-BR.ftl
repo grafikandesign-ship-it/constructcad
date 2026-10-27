@@ -35,6 +35,8 @@ tab-section = Corte: { $name }
 # Faixa de opções
 ribbon-file = Arquivo
 ribbon-architecture = Arquitetura
+ribbon-visualization = Visualização
+ribbon-presentation = Apresentação
 ribbon-modify = Modificar
 ribbon-view = Vista
 ribbon-manage = Gerenciar

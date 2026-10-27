@@ -35,6 +35,8 @@ tab-section = Sección: { $name }
 # Cinta de opciones
 ribbon-file = Archivo
 ribbon-architecture = Arquitectura
+ribbon-visualization = Visualización
+ribbon-presentation = Presentación
 ribbon-modify = Modificar
 ribbon-view = Vista
 ribbon-manage = Gestionar

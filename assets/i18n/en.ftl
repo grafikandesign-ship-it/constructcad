@@ -35,6 +35,8 @@ tab-section = Section: { $name }
 # Ribbon
 ribbon-file = File
 ribbon-architecture = Architecture
+ribbon-visualization = Visualization
+ribbon-presentation = Presentation
 ribbon-modify = Modify
 ribbon-view = View
 ribbon-manage = Manage

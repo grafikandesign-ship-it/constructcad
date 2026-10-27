@@ -35,6 +35,8 @@ tab-section = Sezione: { $name }
 # Barra multifunzione
 ribbon-file = File
 ribbon-architecture = Architettura
+ribbon-visualization = Visualizzazione
+ribbon-presentation = Presentazione
 ribbon-modify = Modifica
 ribbon-view = Vista
 ribbon-manage = Gestisci

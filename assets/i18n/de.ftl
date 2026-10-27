@@ -35,6 +35,8 @@ tab-section = Schnitt: { $name }
 # Menüband
 ribbon-file = Datei
 ribbon-architecture = Architektur
+ribbon-visualization = Visualisierung
+ribbon-presentation = Präsentation
 ribbon-modify = Ändern
 ribbon-view = Ansicht
 ribbon-manage = Verwalten

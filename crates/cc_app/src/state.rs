@@ -18,8 +18,8 @@ pub enum RibbonTab {
     /// Building services: plumbing and electrical.
     Mep,
     Modify,
-    Annotate,
-    View,
+    Visualization,
+    Presentation,
     Manage,
 }
 
@@ -401,9 +401,9 @@ mod tests {
         state.follow_selection();
         assert_eq!(state.ribbon_tab, RibbonTab::Modify);
         // Once the user picks another tab, the same selection leaves it alone.
-        state.ribbon_tab = RibbonTab::View;
+        state.ribbon_tab = RibbonTab::Visualization;
         state.follow_selection();
-        assert_eq!(state.ribbon_tab, RibbonTab::View);
+        assert_eq!(state.ribbon_tab, RibbonTab::Visualization);
         // Drawing tools select what they create without switching tabs.
         state.ribbon_tab = RibbonTab::Architecture;
         state.tool = Tool::Wall { type_id: state.project().default_type(cc_core::Category::Wall).unwrap() };

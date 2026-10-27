@@ -95,7 +95,7 @@ Two-letter keys work while a view has the focus and no text field is being edite
 
 ## View graphics
 
-*View → Graphics* holds **Visibility/Graphics** (VG), **Filters** and **View Templates** (also under *Manage*).
+*Visualization → Graphics* holds **Visibility/Graphics** (VG), **Filters** and **View Templates** (also under *Manage*).
 
 - **Visibility/Graphics** edits the active view (or, from the template manager, a template). The *Model Categories* and *Annotation Categories* tabs list each category with a visibility box and cells for projection lines, surface fill, cut lines, cut fill, halftone and transparency; a cell shows the override (— when none) and opens an editor with color, weight (paper mm) and pattern. The *Filters* tab lists the filters applied to the view, in priority order (↑ ↓), with enabled and visible boxes and the same cells; *Add Filter…* applies another one and *Edit Filters…* opens the filter editor. When the view's template controls categories or filters, the tab says so and is read-only. OK keeps the changes, Cancel undoes them.
 - **Filters** edits the project's filters: name, categories (none: all) and rules — a parameter, an operator and a value — combined with AND or OR, with the number of elements matching.

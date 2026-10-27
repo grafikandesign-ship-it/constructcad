@@ -35,6 +35,8 @@ tab-section = Coupe : { $name }
 # Ruban
 ribbon-file = Fichier
 ribbon-architecture = Architecture
+ribbon-visualization = Visualisation
+ribbon-presentation = Présentation
 ribbon-modify = Modifier
 ribbon-view = Vue
 ribbon-manage = Gérer

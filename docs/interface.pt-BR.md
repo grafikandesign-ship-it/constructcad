@@ -95,7 +95,7 @@ As teclas de duas letras funcionam com o foco numa vista e nenhum campo de texto
 
 ## Gráficos das vistas
 
-*Vista → Gráficos* reúne **Visibilidade/gráficos** (VG), **Filtros** e **Modelos de vista** (também em *Gerenciar*).
+*Visualização → Gráficos* reúne **Visibilidade/gráficos** (VG), **Filtros** e **Modelos de vista** (também em *Gerenciar*).
 
 - **Visibilidade/gráficos** edita a vista ativa (ou, a partir do gerenciador de modelos, um modelo). As abas *Categorias de modelo* e *Categorias de anotação* listam cada categoria com uma caixa de visibilidade e células para linhas em projeção, preenchimento de superfície, linhas de corte, preenchimento de corte, meio-tom e transparência; a célula mostra a sobreposição (— quando não há) e abre um editor de cor, espessura (mm de papel) e padrão. A aba *Filtros* lista os filtros aplicados à vista em ordem de prioridade (↑ ↓), com caixas de ativo e visível e as mesmas células; *Adicionar filtro…* aplica outro e *Editar filtros…* abre o editor de filtros. Quando o modelo da vista controla categorias ou filtros, a aba avisa e fica só para leitura. OK mantém as mudanças; Cancelar as desfaz.
 - **Filtros** edita os filtros do projeto: nome, categorias (nenhuma: todas) e regras — parâmetro, operador e valor — combinadas com E ou OU, com o número de elementos que correspondem.

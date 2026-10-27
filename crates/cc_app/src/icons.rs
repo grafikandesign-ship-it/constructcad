@@ -123,11 +123,14 @@ pub enum Icon {
     Phases,
     Demolish,
     Image,
+    WorkspaceArchitecture,
+    WorkspaceVisualization,
+    WorkspacePresentation,
 }
 
 impl Icon {
     #[cfg(test)]
-    pub const ALL: [Icon; 112] = [
+    pub const ALL: [Icon; 115] = [
         Icon::New,
         Icon::Open,
         Icon::Save,
@@ -240,6 +243,9 @@ impl Icon {
         Icon::Phases,
         Icon::Demolish,
         Icon::Image,
+        Icon::WorkspaceArchitecture,
+        Icon::WorkspaceVisualization,
+        Icon::WorkspacePresentation,
     ];
 
     /// The icon's SVG source.
@@ -357,6 +363,9 @@ impl Icon {
             Icon::Phases => include_str!("../../../assets/icons/ui/phases.svg"),
             Icon::Demolish => include_str!("../../../assets/icons/ui/demolish.svg"),
             Icon::Image => include_str!("../../../assets/icons/ui/image.svg"),
+            Icon::WorkspaceArchitecture => include_str!("../../../assets/icons/ui/workspace-architecture.svg"),
+            Icon::WorkspaceVisualization => include_str!("../../../assets/icons/ui/workspace-visualization.svg"),
+            Icon::WorkspacePresentation => include_str!("../../../assets/icons/ui/workspace-presentation.svg"),
         }
     }
 }
