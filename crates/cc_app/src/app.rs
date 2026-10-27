@@ -421,21 +421,18 @@ impl eframe::App for ConstructApp {
         egui::Panel::bottom("status")
             .frame(bar(PALETTE.surface, 3).stroke(egui::Stroke::new(1.0, PALETTE.border)))
             .show(ui, |ui| ribbon::status_bar(ui, state));
-        egui::Panel::left("left")
+        egui::Panel::left("project-browser")
             .frame(egui::Frame::new().fill(PALETTE.panel).stroke(egui::Stroke::new(1.0, PALETTE.border)))
             .resizable(true)
-            .default_size(290.0)
-            .size_range(220.0..=520.0)
-            .show(ui, |ui| {
-                let h = ui.available_height();
-                egui::Panel::top("browser")
-                    .frame(egui::Frame::new().fill(PALETTE.panel))
-                    .resizable(true)
-                    .default_size(h * 0.5)
-                    .size_range(120.0..=h - 120.0)
-                    .show(ui, |ui| browser::show(ui, state));
-                properties::show(ui, state);
-            });
+            .default_size(260.0)
+            .size_range(220.0..=420.0)
+            .show(ui, |ui| browser::show(ui, state));
+        egui::Panel::right("properties-panel")
+            .frame(egui::Frame::new().fill(PALETTE.panel).stroke(egui::Stroke::new(1.0, PALETTE.border)))
+            .resizable(true)
+            .default_size(300.0)
+            .size_range(260.0..=520.0)
+            .show(ui, |ui| properties::show(ui, state));
         let render_state = frame.wgpu_render_state();
         let central = egui::Frame::new().fill(PALETTE.app_bg).inner_margin(egui::Margin::same(4));
         egui::CentralPanel::no_frame().frame(central).show(ui, |ui| {
