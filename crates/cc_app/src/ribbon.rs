@@ -228,23 +228,28 @@ fn icon_button(ui: &mut Ui, (icon, badge): (Icon, Option<Badge>), enabled: bool)
 
 /// A captioned group of ribbon buttons followed by a vertical divider.
 fn group(ui: &mut Ui, caption: String, add: impl FnOnce(&mut Ui)) {
-    let caption_w =
-        ui.painter().layout_no_wrap(caption.clone(), egui::FontId::proportional(11.0), PALETTE.text).size().x;
-    let inner = ui.vertical(|ui| {
-        // At least as wide as the caption, so it never wraps.
-        ui.set_min_width(caption_w + 8.0);
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 2.0;
-            add(ui);
+    // One outer widget per group lets the row distribute free space only
+    // between groups, without separating a caption from its divider.
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        let caption_w =
+            ui.painter().layout_no_wrap(caption.clone(), egui::FontId::proportional(11.0), PALETTE.text).size().x;
+        let inner = ui.vertical(|ui| {
+            // At least as wide as the caption, so it never wraps.
+            ui.set_min_width(caption_w + 8.0);
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 2.0;
+                add(ui);
+            });
+            let width = ui.min_rect().width();
+            ui.allocate_ui_with_layout(vec2(width, 14.0), Layout::top_down(Align::Center), |ui| {
+                ui.label(theme::caption(caption));
+            });
         });
-        let width = ui.min_rect().width();
-        ui.allocate_ui_with_layout(vec2(width, 14.0), Layout::top_down(Align::Center), |ui| {
-            ui.label(theme::caption(caption));
-        });
+        let height = inner.response.rect.height();
+        let (r, _) = ui.allocate_exact_size(vec2(13.0, height), Sense::hover());
+        ui.painter().vline(r.center().x, r.y_range().shrink(4.0), Stroke::new(1.0, PALETTE.border));
     });
-    let height = inner.response.rect.height();
-    let (r, _) = ui.allocate_exact_size(vec2(13.0, height), Sense::hover());
-    ui.painter().vline(r.center().x, r.y_range().shrink(4.0), Stroke::new(1.0, PALETTE.border));
 }
 
 /// A ribbon tab title in the top strip.
@@ -480,10 +485,25 @@ const SCROLL_STEP: f32 = 240.0;
 #[derive(Clone, Copy, Default)]
 struct RowExtent {
     content: f32,
+    /// Spacing applied between groups when `content` was last measured.
+    gap: f32,
     offset: f32,
     visible: f32,
     /// Offset an arrow asked for, applied on the next frame.
     pending: Option<f32>,
+}
+
+fn ribbon_group_count(tab: RibbonTab) -> usize {
+    match tab {
+        RibbonTab::File => 5,
+        RibbonTab::Architecture => 7,
+        RibbonTab::Visualization => 4,
+        RibbonTab::Presentation => 7,
+        RibbonTab::Modify => 7,
+        RibbonTab::Structure => 8,
+        RibbonTab::Mep => 6,
+        RibbonTab::Manage => 4,
+    }
 }
 
 /// The active tab's groups. When they are wider than the window they
@@ -491,10 +511,14 @@ struct RowExtent {
 fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
     let id = egui::Id::new(("ribbon-row", state.ribbon_tab as u8));
     let mut extent: RowExtent = ui.ctx().data(|d| d.get_temp(id)).unwrap_or_default();
-    let overflow = extent.content > available + 0.5;
+    let spaces = ribbon_group_count(state.ribbon_tab).saturating_sub(1) as f32;
+    let natural = (extent.content - extent.gap * spaces).max(0.0);
+    let overflow = natural > available + 0.5;
+    let gap =
+        if extent.content > 0.0 && !overflow && spaces > 0.0 { ((available - natural) / spaces).max(0.0) } else { 0.0 };
     ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        let max_offset = (extent.content - extent.visible).max(0.0);
+        let max_offset = (natural - extent.visible).max(0.0);
         let mut target = extent.pending.take();
         if overflow && scroll_arrow(ui, false, extent.offset > 0.5).clicked() {
             target = Some((extent.offset - SCROLL_STEP).max(0.0));
@@ -509,7 +533,7 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
         }
         let out = area.show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.spacing_mut().item_spacing.x = gap;
                 match state.ribbon_tab {
                     RibbonTab::File => file_tab(ui, state),
                     RibbonTab::Architecture => architecture_tab(ui, state),
@@ -527,11 +551,18 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
             ui.ctx().request_repaint();
         }
         extent.content = out.content_size.x;
+        extent.gap = gap;
         extent.offset = out.state.offset.x;
         extent.visible = out.inner_rect.width();
     });
-    if (extent.content > available + 0.5) != overflow {
-        // The arrows appear or go: lay out again with them.
+    let measured_natural = (extent.content - extent.gap * spaces).max(0.0);
+    let next_gap = if extent.content > 0.0 && measured_natural <= available + 0.5 && spaces > 0.0 {
+        ((available - measured_natural) / spaces).max(0.0)
+    } else {
+        0.0
+    };
+    if (measured_natural > available + 0.5) != overflow || (next_gap - extent.gap).abs() > 0.5 {
+        // The arrows or group spacing changed: lay out again.
         ui.ctx().request_repaint();
     }
     ui.ctx().data_mut(|d| d.insert_temp(id, extent));

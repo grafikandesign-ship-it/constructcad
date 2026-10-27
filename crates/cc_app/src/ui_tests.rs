@@ -179,6 +179,19 @@ fn narrow_ribbon_scrolls() {
     assert!(harness.query_by_label(&t!("ribbon-scroll-right")).is_none());
 }
 
+#[test]
+fn wide_ribbon_uses_the_available_width() {
+    let mut state = sample_state();
+    state.ribbon_tab = RibbonTab::Architecture;
+    let mut harness = ribbon_harness(state, 1600.0);
+    for _ in 0..3 {
+        harness.run();
+    }
+    let last_group = harness.get_by_label(&t!("tool-select")).rect();
+    assert!(last_group.right() > 1500.0, "last ribbon group remained on the left: {last_group:?}");
+    assert!(harness.query_by_label(&t!("ribbon-scroll-right")).is_none());
+}
+
 /// Double-clicking a tab collapses the ribbon to its tabs; a click shows a
 /// tab's panel over the views, and running a command closes it.
 #[test]
