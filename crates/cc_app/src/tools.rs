@@ -2043,7 +2043,9 @@ fn hosted_tool(
     type_id: ElementTypeId,
     xf: &Xf,
 ) {
-    if resp.hovered() && ui.input(|i| i.key_pressed(Key::Space)) {
+    // A split workspace can render more than one plan in the same frame.
+    // Consume Space so one key press advances the four-way cycle once.
+    if resp.hovered() && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::Space)) {
         state.interaction.cycle_hosted_orientation(category);
     }
     let Some(raw) = resp.hover_pos().map(|p| xf.to_world(p)) else { return };
@@ -2724,6 +2726,31 @@ mod tests {
         assert_eq!(interaction.hosted_orientation(true), (true, false));
         interaction.cycle_hosted_orientation(Category::Window);
         assert_eq!(interaction.hosted_orientation(true), (false, false));
+    }
+
+    #[test]
+    fn a_space_press_is_consumed_once_across_plan_views() {
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            events: vec![egui::Event::Key {
+                key: Key::Space,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+            ..Default::default()
+        };
+        ctx.begin_pass(input);
+        let mut interaction = Interaction::default();
+        for _ in 0..2 {
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::Space)) {
+                interaction.cycle_hosted_orientation(Category::Door);
+            }
+        }
+        assert_eq!(interaction.hosted_orientation(false), (false, true));
+        let mut output = ctx.end_pass();
+        output.textures_delta.clear();
     }
 
     #[test]
