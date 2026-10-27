@@ -12,10 +12,10 @@ use cc_views::format;
 use egui::{Align, Button, DragValue, Layout, Response, RichText, Sense, Stroke, StrokeKind, Ui, vec2};
 
 /// Height of the large ribbon buttons.
-const BUTTON_HEIGHT: f32 = 66.0;
-const ICON_SIZE: f32 = 22.0;
+const BUTTON_HEIGHT: f32 = 74.0;
+const ICON_SIZE: f32 = 27.0;
 /// Icon size of the small stacked ribbon buttons.
-const STACK_ICON_SIZE: f32 = 20.0;
+const STACK_ICON_SIZE: f32 = 22.0;
 
 /// Icon of a model category, shared by the ribbon, options bar and browser.
 pub fn category_icon(category: Category) -> Icon {
@@ -167,7 +167,7 @@ fn stack_rows(n: usize) -> usize {
 fn stacked(ui: &mut Ui, state: &AppState, family: &[UiCommand]) -> Option<UiCommand> {
     let mut clicked = None;
     let rows = stack_rows(family.len());
-    let size = vec2(28.0, (BUTTON_HEIGHT - 4.0) / 3.0);
+    let size = vec2(32.0, (BUTTON_HEIGHT - 4.0) / 3.0);
     let column_h = rows as f32 * size.y + (rows as f32 - 1.0) * 2.0;
     for chunk in family.chunks(rows) {
         ui.vertical(|ui| {
@@ -228,16 +228,18 @@ fn icon_button(ui: &mut Ui, (icon, badge): (Icon, Option<Badge>), enabled: bool)
 
 /// A captioned group of ribbon buttons followed by a vertical divider.
 fn group(ui: &mut Ui, caption: String, add: impl FnOnce(&mut Ui)) {
-    // One outer widget per group lets the row distribute free space only
-    // between groups, without separating a caption from its divider.
-    ui.horizontal(|ui| {
+    // Keep a group's buttons, caption and divider together in one cell.
+    // Equal side padding centers the compact contents inside that cell.
+    ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
+        let padding = ui.ctx().data(|d| d.get_temp::<f32>(egui::Id::new("ribbon-group-padding"))).unwrap_or(0.0);
+        ui.add_space(padding);
         let caption_w =
             ui.painter().layout_no_wrap(caption.clone(), egui::FontId::proportional(11.0), PALETTE.text).size().x;
         let inner = ui.vertical(|ui| {
             // At least as wide as the caption, so it never wraps.
             ui.set_min_width(caption_w + 8.0);
-            ui.horizontal(|ui| {
+            ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
                 ui.spacing_mut().item_spacing.x = 2.0;
                 add(ui);
             });
@@ -249,6 +251,14 @@ fn group(ui: &mut Ui, caption: String, add: impl FnOnce(&mut Ui)) {
         let height = inner.response.rect.height();
         let (r, _) = ui.allocate_exact_size(vec2(13.0, height), Sense::hover());
         ui.painter().vline(r.center().x, r.y_range().shrink(4.0), Stroke::new(1.0, PALETTE.border));
+        ui.add_space(padding);
+        let intrinsic = inner.response.rect.width() + r.width();
+        ui.ctx().data_mut(|d| {
+            let id = egui::Id::new("ribbon-group-widths");
+            let mut widths = d.get_temp::<Vec<f32>>(id).unwrap_or_default();
+            widths.push(intrinsic);
+            d.insert_temp(id, widths);
+        });
     });
 }
 
@@ -481,12 +491,15 @@ const SCROLL_ARROW_WIDTH: f32 = 18.0;
 /// How far one arrow click scrolls.
 const SCROLL_STEP: f32 = 240.0;
 
-/// What the ribbon row measured last frame: content width, offset and visible width.
-#[derive(Clone, Copy, Default)]
+/// Keep large windows balanced without pulling sparse tabs too far apart.
+const MAX_GROUP_PADDING: f32 = 88.0;
+
+/// What the ribbon row measured last frame: group widths, offset and visible width.
+#[derive(Clone, Default)]
 struct RowExtent {
-    content: f32,
-    /// Spacing applied between groups when `content` was last measured.
-    gap: f32,
+    /// Intrinsic widths measured for this tab's groups in the last frame.
+    groups: Vec<f32>,
+    padding: f32,
     offset: f32,
     visible: f32,
     /// Offset an arrow asked for, applied on the next frame.
@@ -511,11 +524,23 @@ fn ribbon_group_count(tab: RibbonTab) -> usize {
 fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
     let id = egui::Id::new(("ribbon-row", state.ribbon_tab as u8));
     let mut extent: RowExtent = ui.ctx().data(|d| d.get_temp(id)).unwrap_or_default();
-    let spaces = ribbon_group_count(state.ribbon_tab).saturating_sub(1) as f32;
-    let natural = (extent.content - extent.gap * spaces).max(0.0);
+    let count = ribbon_group_count(state.ribbon_tab);
+    let natural: f32 = extent.groups.iter().sum();
     let overflow = natural > available + 0.5;
-    let gap =
-        if extent.content > 0.0 && !overflow && spaces > 0.0 { ((available - natural) / spaces).max(0.0) } else { 0.0 };
+    let padding = if extent.groups.len() == count && !overflow {
+        ((available - natural) / (2 * count) as f32).clamp(0.0, MAX_GROUP_PADDING)
+    } else {
+        0.0
+    };
+    let outer_margin = if extent.groups.len() == count && !overflow {
+        ((available - natural - 2.0 * count as f32 * padding) / 2.0).max(0.0)
+    } else {
+        0.0
+    };
+    ui.ctx().data_mut(|d| {
+        d.insert_temp(egui::Id::new("ribbon-group-padding"), padding);
+        d.insert_temp(egui::Id::new("ribbon-group-widths"), Vec::<f32>::new());
+    });
     ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
         let max_offset = (natural - extent.visible).max(0.0);
@@ -532,8 +557,9 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
             area = area.horizontal_scroll_offset(offset);
         }
         let out = area.show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = gap;
+            ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.add_space(outer_margin);
                 match state.ribbon_tab {
                     RibbonTab::File => file_tab(ui, state),
                     RibbonTab::Architecture => architecture_tab(ui, state),
@@ -544,25 +570,26 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
                     RibbonTab::Mep => mep_tab(ui, state),
                     RibbonTab::Manage => manage_tab(ui, state),
                 }
+                ui.add_space(outer_margin);
             });
         });
         if overflow && scroll_arrow(ui, true, extent.offset < max_offset - 0.5).clicked() {
             extent.pending = Some((extent.offset + SCROLL_STEP).min(max_offset));
             ui.ctx().request_repaint();
         }
-        extent.content = out.content_size.x;
-        extent.gap = gap;
+        extent.groups = ui.ctx().data(|d| d.get_temp(egui::Id::new("ribbon-group-widths"))).unwrap_or_default();
+        extent.padding = padding;
         extent.offset = out.state.offset.x;
         extent.visible = out.inner_rect.width();
     });
-    let measured_natural = (extent.content - extent.gap * spaces).max(0.0);
-    let next_gap = if extent.content > 0.0 && measured_natural <= available + 0.5 && spaces > 0.0 {
-        ((available - measured_natural) / spaces).max(0.0)
+    let measured_natural: f32 = extent.groups.iter().sum();
+    let next_padding = if extent.groups.len() == count && measured_natural <= available + 0.5 {
+        ((available - measured_natural) / (2 * count) as f32).clamp(0.0, MAX_GROUP_PADDING)
     } else {
         0.0
     };
-    if (measured_natural > available + 0.5) != overflow || (next_gap - extent.gap).abs() > 0.5 {
-        // The arrows or group spacing changed: lay out again.
+    if (measured_natural > available + 0.5) != overflow || (next_padding - extent.padding).abs() > 0.5 {
+        // The arrows or group cells changed: lay out again.
         ui.ctx().request_repaint();
     }
     ui.ctx().data_mut(|d| d.insert_temp(id, extent));

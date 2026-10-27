@@ -190,6 +190,12 @@ fn wide_ribbon_uses_the_available_width() {
     let last_group = harness.get_by_label(&t!("tool-select")).rect();
     assert!(last_group.right() > 1500.0, "last ribbon group remained on the left: {last_group:?}");
     assert!(harness.query_by_label(&t!("ribbon-scroll-right")).is_none());
+    let wall = harness.get_by_label(&t!("tool-wall")).rect();
+    let door = harness.get_by_label(&t!("tool-door")).rect();
+    let window = harness.get_by_label(&t!("tool-window")).rect();
+    let floor = harness.get_by_label(&t!("tool-floor")).rect();
+    assert!([door, window, floor].iter().all(|r| (r.top() - wall.top()).abs() < 1.0));
+    assert!(window.right() - wall.left() < floor.left() - wall.left(), "wall, door and window stay grouped");
 }
 
 /// Double-clicking a tab collapses the ribbon to its tabs; a click shows a
