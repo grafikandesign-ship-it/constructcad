@@ -7,6 +7,51 @@ use std::f64::consts::{PI, TAU};
 pub(crate) use crate::cut::POCHE;
 const CEILING_GRID: f64 = 0.625;
 
+/// Geometry of a hinged door in plan, shared with the placement preview.
+#[derive(Debug, Clone, Copy)]
+pub struct DoorPlanSymbol {
+    pub hinge: DVec2,
+    pub leaf_end: DVec2,
+    pub radius: f64,
+    pub arc_start: f64,
+    pub arc_end: f64,
+}
+
+impl DoorPlanSymbol {
+    pub fn arc_points(self) -> Vec<DVec2> {
+        let steps = 16;
+        (0..=steps)
+            .map(|i| {
+                let angle = self.arc_start + (self.arc_end - self.arc_start) * i as f64 / steps as f64;
+                self.hinge + DVec2::new(angle.cos(), angle.sin()) * self.radius
+            })
+            .collect()
+    }
+}
+
+pub fn door_plan_symbol(g: &WallGeom, u0: f64, u1: f64, flip_facing: bool, flip_hand: bool) -> DoorPlanSymbol {
+    let radius = u1 - u0;
+    let side = if flip_facing { -1.0 } else { 1.0 };
+    let (hinge_u, toward) = if flip_hand { (u1, -1.0) } else { (u0, 1.0) };
+    let hinge = g.world(hinge_u, side * g.half);
+    // For curved walls the leaf is square to the chord at the opening's center.
+    let (_, dir, normal) = g.frame_at((u0 + u1) * 0.5);
+    let leaf_dir = normal * side;
+    let arc_start = leaf_dir.to_angle();
+    let mut arc_end = (dir * toward).to_angle();
+    if arc_end - arc_start > PI {
+        arc_end -= TAU;
+    } else if arc_start - arc_end > PI {
+        arc_end += TAU;
+    }
+    DoorPlanSymbol { hinge, leaf_end: hinge + leaf_dir * radius, radius, arc_start, arc_end }
+}
+
+/// The two frame lines shown for a window in plan and during placement.
+pub fn window_plan_lines(g: &WallGeom, u0: f64, u1: f64) -> [Vec<DVec2>; 2] {
+    [g.path(u0, u1, -0.01), g.path(u0, u1, 0.01)]
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ColumnCut {
     Cut,
@@ -397,26 +442,13 @@ fn draw_openings(d: &mut Drawing2D, project: &Project, g: &WallGeom, ceiling: bo
         let id = Some(e.id);
         match e.kind {
             ElementKind::Door(_) if !ceiling => {
-                let width = o.u1 - o.u0;
-                let side = if host.flip_facing { -1.0 } else { 1.0 };
-                let (hinge_u, toward) = if host.flip_hand { (o.u1, -1.0) } else { (o.u0, 1.0) };
-                let hinge = g.world(hinge_u, side * g.half);
-                // Square to the wall at the opening's center (an arc wall's chord).
-                let (_, dir, normal) = g.frame_at((o.u0 + o.u1) * 0.5);
-                let leaf_dir = normal * side;
-                d.line(hinge, hinge + leaf_dir * width, LineStyle::Projection, id);
-                let a0 = leaf_dir.to_angle();
-                let mut a1 = (dir * toward).to_angle();
-                if a1 - a0 > PI {
-                    a1 -= TAU;
-                } else if a0 - a1 > PI {
-                    a1 += TAU;
-                }
-                d.arc(hinge, width, a0, a1, LineStyle::Thin, id);
+                let symbol = door_plan_symbol(g, o.u0, o.u1, host.flip_facing, host.flip_hand);
+                d.line(symbol.hinge, symbol.leaf_end, LineStyle::Projection, id);
+                d.polyline(&symbol.arc_points(), false, LineStyle::Thin, id);
             }
             ElementKind::Window(_) => {
-                for v in [-0.01, 0.01] {
-                    d.polyline(&g.path(o.u0, o.u1, v), false, LineStyle::Thin, id);
+                for line in window_plan_lines(g, o.u0, o.u1) {
+                    d.polyline(&line, false, LineStyle::Thin, id);
                 }
             }
             _ => {}
@@ -510,6 +542,20 @@ mod tests {
             (w, dr)
         });
         let geom = ModelGeometry::build(&doc.project);
+        let wall = &geom.walls[&wall_id];
+        let opening = &wall.openings[0];
+        for facing in [false, true] {
+            for hand in [false, true] {
+                let symbol = door_plan_symbol(wall, opening.u0, opening.u1, facing, hand);
+                let hinge_u = if hand { opening.u1 } else { opening.u0 };
+                let side = if facing { -1.0 } else { 1.0 };
+                assert!(symbol.hinge.distance(wall.world(hinge_u, side * wall.half)) < 1e-9);
+                assert!(symbol.arc_points()[0].distance(symbol.leaf_end) < 1e-9);
+                assert!(symbol.arc_points().last().is_some_and(|p| {
+                    p.distance(wall.world(if hand { opening.u0 } else { opening.u1 }, side * wall.half)) < 1e-9
+                }));
+            }
+        }
         let d = plan(&doc.project, &geom, level, 1.2, false, 50);
         let fills =
             d.prims.iter().filter(|p| matches!(p, Prim::Fill { element: Some(id), .. } if *id == wall_id)).count();

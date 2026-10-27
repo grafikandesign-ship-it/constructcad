@@ -24,7 +24,7 @@ mod sheet;
 pub use annotate::{DimensionLayout, HIGHLIGHT_ONLY, dimension_layout};
 pub use drawing::{Anchor, Drawing2D, LineStyle, Pen, Prim, ResolvedPen, halftone};
 pub use legend::legend;
-pub use plan::{is_structural, plan, plan_of};
+pub use plan::{DoorPlanSymbol, door_plan_symbol, is_structural, plan, plan_of, window_plan_lines};
 pub use projected::{Frame, axonometric, elevation, section};
 pub use schedule::{Cell, Row, Table, field_value, schedule, schedule_where, to_csv};
 pub use sheet::{MARGIN, PlacedViewport, Sheet, TITLE_H, TITLE_W, TitleLabels, compose as compose_sheet};

@@ -472,16 +472,48 @@ mod tests {
         };
         assert!(((moved - along_x.to).dot(along_x.away) - 2.0).abs() < 1e-9, "{moved}");
     }
+
+    #[test]
+    fn selected_doors_and_windows_show_their_width_instead_of_host_wall_segments() {
+        let mut state = sample();
+        let view = plan(&state);
+        let ids: Vec<_> = state
+            .project()
+            .elements
+            .values()
+            .filter(|e| matches!(e.kind, ElementKind::Door(_) | ElementKind::Window(_)))
+            .map(|e| e.id)
+            .collect();
+        assert!(ids.iter().any(|id| matches!(state.project().element(*id).unwrap().kind, ElementKind::Door(_))));
+        assert!(ids.iter().any(|id| matches!(state.project().element(*id).unwrap().kind, ElementKind::Window(_))));
+        let drawing = state.drawing(view).unwrap();
+        for id in ids {
+            state.selection = BTreeSet::from([id]);
+            let t = temps(&state, &drawing);
+            let expected = state
+                .project()
+                .element_type(state.project().element(id).unwrap().type_id)
+                .unwrap()
+                .opening_size()
+                .unwrap()
+                .0;
+            assert_eq!(t.len(), 1, "opening {id:?}: {t:?}");
+            assert!((t[0].value.unwrap() - expected).abs() < 1e-9);
+            assert!(!t[0].editable);
+        }
+    }
 }
 
-/// A temporary dimension of the selected element: from a point of it to
-/// the nearest reference linework, editable to move the element.
+/// A temporary dimension of the selected element. Offsets to reference
+/// linework are editable; an opening's own width is displayed read-only.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Temp {
     pub from: DVec2,
     pub to: DVec2,
     /// Unit direction the element moves for a larger value (away from `to`).
     pub away: DVec2,
+    pub value: Option<f64>,
+    pub editable: bool,
 }
 
 /// Nearest reference linework (walls, grids and columns other than
@@ -528,7 +560,7 @@ fn nearest_along(
 
 /// Temporary dimensions of the single selected element in a plan: walls,
 /// beams and grids to the nearest parallel linework on each side; columns
-/// and components along X and Y; doors and windows along their wall.
+/// and components along X and Y; doors and windows show their opening width.
 pub fn temps(state: &AppState, drawing: &Drawing2D) -> Vec<Temp> {
     let [id] = state.selection.iter().copied().collect::<Vec<_>>()[..] else { return Vec::new() };
     let project = state.project();
@@ -542,7 +574,7 @@ pub fn temps(state: &AppState, drawing: &Drawing2D) -> Vec<Temp> {
     let mut out = Vec::new();
     let mut probe = |p: DVec2, dir: DVec2, skip: &BTreeSet<ElementId>| {
         if let Some(q) = nearest_along(state, drawing, skip, p, dir) {
-            out.push(Temp { from: p, to: q, away: -dir });
+            out.push(Temp { from: p, to: q, away: -dir, value: None, editable: true });
         }
     };
     match &el.kind {
@@ -565,14 +597,19 @@ pub fn temps(state: &AppState, drawing: &Drawing2D) -> Vec<Temp> {
             }
         }
         ElementKind::Door(h) | ElementKind::Window(h) => {
-            let Some(w) = project.element(h.host).and_then(|e| e.as_wall()) else { return out };
-            let Some(u) = (w.end - w.start).try_normalize() else { return out };
-            let center = w.start + u * h.offset;
-            // The host's own faces run along the move; other walls cross it.
-            skip.insert(h.host);
-            for d in [u, -u] {
-                probe(center, d, &skip);
-            }
+            let Some(g) = state.session.geom().walls.get(&h.host) else { return out };
+            let Some(opening) = g.openings.iter().find(|opening| opening.element == id) else { return out };
+            // Put the width opposite the door swing, beyond the wall face.
+            // The resolved opening also works for arc walls and clipped widths.
+            let side = if h.flip_facing { 1.0 } else { -1.0 };
+            let v = side * (g.half + 0.18);
+            out.push(Temp {
+                from: g.world(opening.u0, v),
+                to: g.world(opening.u1, v),
+                away: DVec2::ZERO,
+                value: Some(opening.u1 - opening.u0),
+                editable: false,
+            });
         }
         _ => {}
     }
@@ -613,10 +650,10 @@ fn selection_temps(
     let pointer = resp.hover_pos();
     let mut clicked = None;
     for t in temps(state, drawing) {
-        let (center, size, angle) = crate::tools::temp_measure(painter, xf, t.from, t.to);
+        let (center, size, angle) = crate::tools::temp_measure_value(painter, xf, t.from, t.to, t.value);
         let local = pointer.map(|p| egui::emath::Rot2::from_angle(angle).inverse() * (p - center));
         let over = local.is_some_and(|l| l.x.abs() <= size.x / 2.0 + 4.0 && l.y.abs() <= size.y / 2.0 + 4.0);
-        if over {
+        if over && t.editable {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Text);
             painter.rect_stroke(
                 egui::Rect::from_center_size(center, size + egui::vec2(8.0, 6.0)),

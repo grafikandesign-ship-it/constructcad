@@ -1,7 +1,7 @@
 //! Modeling tools: selection, walls, hosted openings, sketches, sections,
 //! rooms, grids and dimensions.
 
-use crate::paint::{HIGHLIGHT, PREVIEW, PaintOptions, Xf, paint_drawing};
+use crate::paint::{HIGHLIGHT, PREVIEW, PaintOptions, Xf, fill_polygon, paint_drawing};
 use crate::state::AppState;
 use crate::t;
 use cc_core::{
@@ -12,7 +12,7 @@ use cc_engine::commands::{create, modify as modify_cmd, views};
 use cc_engine::default_top;
 pub use cc_engine::walls_loop;
 use cc_geom::{ModelGeometry, polygon};
-use cc_views::{Drawing2D, format};
+use cc_views::{Drawing2D, door_plan_symbol, format, window_plan_lines};
 use egui::{Color32, Key, Painter, Pos2, Response, Stroke, Ui};
 use glam::DVec2;
 use std::collections::BTreeSet;
@@ -336,7 +336,10 @@ pub struct Interaction {
     pub anchor: Option<DVec2>,
     /// Sketch points.
     pub points: Vec<DVec2>,
+    /// Door hinge on the other end of its opening.
     pub flip_hand: bool,
+    /// Reverse the side selected by the cursor; Space cycles both door flags.
+    pub flip_facing: bool,
     pub drag: Option<Drag>,
     /// Elements a transform tool acts on (the selection when it started).
     pub targets: Vec<ElementId>,
@@ -353,6 +356,23 @@ pub struct Interaction {
 }
 
 impl Interaction {
+    pub fn hosted_orientation(&self, cursor_right: bool) -> (bool, bool) {
+        (cursor_right ^ self.flip_facing, self.flip_hand)
+    }
+
+    pub fn cycle_hosted_orientation(&mut self, category: Category) {
+        if category == Category::Door {
+            if self.flip_hand {
+                self.flip_hand = false;
+                self.flip_facing = !self.flip_facing;
+            } else {
+                self.flip_hand = true;
+            }
+        } else if category == Category::Window {
+            self.flip_facing = !self.flip_facing;
+        }
+    }
+
     pub fn is_idle(&self) -> bool {
         self.anchor.is_none() && self.points.is_empty() && self.drag.is_none()
     }
@@ -649,7 +669,15 @@ fn dim_text(painter: &Painter, pos: Pos2, text: String, angle: f32, strong: bool
 /// Temporary dimension measuring from `a` to `b` (both drawn as small
 /// ticks on the measuring line). Returns the screen center, size and
 /// rotation of its value, for clicking.
-pub(crate) fn temp_measure(painter: &Painter, xf: &Xf, a: DVec2, b: DVec2) -> (Pos2, egui::Vec2, f32) {
+/// Draw a measured span with an optional model value. On curved walls the
+/// opening width follows the arc, while its on-screen endpoints form a chord.
+pub(crate) fn temp_measure_value(
+    painter: &Painter,
+    xf: &Xf,
+    a: DVec2,
+    b: DVec2,
+    value: Option<f64>,
+) -> (Pos2, egui::Vec2, f32) {
     let (sa, sb) = (xf.to_screen(a), xf.to_screen(b));
     painter.line_segment([sa, sb], Stroke::new(1.0, TEMP_DIM));
     let d = (sb - sa).normalized();
@@ -661,7 +689,7 @@ pub(crate) fn temp_measure(painter: &Painter, xf: &Xf, a: DVec2, b: DVec2) -> (P
     if angle.abs() > std::f32::consts::FRAC_PI_2 {
         angle -= angle.signum() * std::f32::consts::PI;
     }
-    let text = format::length(a.distance(b));
+    let text = format::length(value.unwrap_or_else(|| a.distance(b)));
     let size = painter.layout_no_wrap(text.clone(), egui::FontId::proportional(12.0), TEMP_DIM).size();
     let up = egui::emath::Rot2::from_angle(angle) * egui::vec2(0.0, -(size.y / 2.0 + 3.0));
     let center = sa + (sb - sa) / 2.0 + up;
@@ -2015,8 +2043,8 @@ fn hosted_tool(
     type_id: ElementTypeId,
     xf: &Xf,
 ) {
-    if ui.input(|i| i.key_pressed(Key::Space)) {
-        state.interaction.flip_hand = !state.interaction.flip_hand;
+    if resp.hovered() && ui.input(|i| i.key_pressed(Key::Space)) {
+        state.interaction.cycle_hosted_orientation(category);
     }
     let Some(raw) = resp.hover_pos().map(|p| xf.to_world(p)) else { return };
     let project = &state.session.doc.project;
@@ -2037,20 +2065,23 @@ fn hosted_tool(
         return;
     }
     let offset = u.clamp(width * 0.5 + margin, g.length - width * 0.5 - margin);
-    let flip_facing = v < 0.0;
+    let (flip_facing, flip_hand) = state.interaction.hosted_orientation(v < 0.0);
     let (u0, u1) = (offset - width * 0.5, offset + width * 0.5);
     let rect = g.outline((u0, u1), (u0, u1));
     let pts: Vec<Pos2> = rect.iter().map(|p| xf.to_screen(*p)).collect();
+    // Cover the uncut wall below the cursor so the preview reads like the placed opening.
+    fill_polygon(painter, pts.clone(), Color32::WHITE);
     painter.add(egui::Shape::closed_line(pts, Stroke::new(2.0, PREVIEW)));
     if category == Category::Door {
-        let side = if flip_facing { -1.0 } else { 1.0 };
-        let hinge_u = if state.interaction.flip_hand { u1 } else { u0 };
-        let hinge = g.world(hinge_u, side * g.half);
-        let normal = g.normal_at(offset);
-        painter.line_segment(
-            [xf.to_screen(hinge), xf.to_screen(hinge + normal * side * width)],
-            Stroke::new(1.5, PREVIEW),
-        );
+        let symbol = door_plan_symbol(g, u0, u1, flip_facing, flip_hand);
+        painter.line_segment([xf.to_screen(symbol.hinge), xf.to_screen(symbol.leaf_end)], Stroke::new(1.5, PREVIEW));
+        let arc: Vec<_> = symbol.arc_points().into_iter().map(|p| xf.to_screen(p)).collect();
+        painter.add(egui::Shape::line(arc, Stroke::new(1.2, PREVIEW)));
+    } else if category == Category::Window {
+        for line in window_plan_lines(g, u0, u1) {
+            painter
+                .add(egui::Shape::line(line.into_iter().map(|p| xf.to_screen(p)).collect(), Stroke::new(1.4, PREVIEW)));
+        }
     }
     label(painter, xf.to_screen(raw), format!("{} {}", t!("label-offset"), format::meters(offset)));
 
@@ -2061,7 +2092,7 @@ fn hosted_tool(
             sill: Some(sill),
             type_ref: Some(Ref::Id(type_id.0)),
             flip_facing: Some(flip_facing),
-            flip_hand: Some(state.interaction.flip_hand),
+            flip_hand: Some(flip_hand),
             point: None,
         };
         if category == Category::Door {
@@ -2679,6 +2710,20 @@ mod tests {
         let s = snap(&p, Some(level), raw, Some(anchor), &[], &[DVec2::new(4.0, 9.0)], SCALE, false);
         assert_eq!(s.kind, SnapKind::Alignment);
         assert!(s.point.distance(target) < 1e-9, "{} vs {target}", s.point);
+    }
+
+    #[test]
+    fn hosted_orientation_cycles_all_four_door_swing_directions() {
+        let mut interaction = Interaction::default();
+        assert_eq!(interaction.hosted_orientation(false), (false, false));
+        for expected in [(false, true), (true, false), (true, true), (false, false)] {
+            interaction.cycle_hosted_orientation(Category::Door);
+            assert_eq!(interaction.hosted_orientation(false), expected);
+        }
+        // The cursor's side still establishes the initial facing on a wall.
+        assert_eq!(interaction.hosted_orientation(true), (true, false));
+        interaction.cycle_hosted_orientation(Category::Window);
+        assert_eq!(interaction.hosted_orientation(true), (false, false));
     }
 
     #[test]

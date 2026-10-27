@@ -924,8 +924,14 @@ pub fn options_bar(ui: &mut Ui, state: &mut AppState) {
                 ui.separator();
                 ui.label(theme::muted(if state.wall_arc { t!("hint-wall-arc") } else { t!("hint-wall") }));
             }
-            Tool::Hosted { .. } => {
-                ui.checkbox(&mut state.interaction.flip_hand, t!("prop-flip-hand"));
+            Tool::Hosted { category, .. } => {
+                if ui.button(t!("action-cycle-orientation")).clicked() {
+                    state.interaction.cycle_hosted_orientation(category);
+                }
+                if category == Category::Door {
+                    ui.checkbox(&mut state.interaction.flip_hand, t!("prop-flip-hand"));
+                }
+                ui.checkbox(&mut state.interaction.flip_facing, t!("prop-flip-facing"));
                 ui.label(theme::muted(t!("hint-hosted")));
             }
             Tool::Sketch { category, type_id } => {
