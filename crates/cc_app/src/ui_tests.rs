@@ -198,6 +198,61 @@ fn wide_ribbon_uses_the_available_width() {
     assert!(window.right() - wall.left() < floor.left() - wall.left(), "wall, door and window stay grouped");
 }
 
+#[test]
+fn presentation_buttons_expand_in_wide_windows_and_stack_when_narrow() {
+    use crate::commands::UiCommand;
+    use crate::tools::DimensionMode;
+    let ribbon_button = |harness: &Harness<'static, AppState>, label: &str| {
+        harness
+            .query_all_by_role(Role::Button)
+            .filter(|node| node.accesskit_node().label().as_deref() == Some(label))
+            .map(|node| node.rect())
+            .max_by(|a, b| a.top().total_cmp(&b.top()))
+            .unwrap()
+    };
+    let mut state = sample_state();
+    state.ribbon_tab = RibbonTab::Presentation;
+    let mut wide = ribbon_harness(state, 2048.0);
+    for _ in 0..5 {
+        wide.run();
+    }
+    let export_labels =
+        [UiCommand::ExportPdf, UiCommand::ExportSvg, UiCommand::ExportImage].map(|command| command.label(wide.state()));
+    let export_rects = export_labels.map(|label| ribbon_button(&wide, &label));
+    assert!(export_rects.iter().all(|rect| rect.height() >= 70.0));
+    assert!(export_rects.windows(2).all(|pair| pair[0].right() <= pair[1].left()));
+    assert!(export_rects.iter().all(|rect| (rect.top() - export_rects[0].top()).abs() < 1.0));
+    let dimension_labels = [
+        DimensionMode::Aligned,
+        DimensionMode::Linear,
+        DimensionMode::Angular,
+        DimensionMode::Radial,
+        DimensionMode::Diameter,
+    ]
+    .map(|mode| UiCommand::Dimension(mode).label(wide.state()));
+    let dimension_rects = dimension_labels.map(|label| ribbon_button(&wide, &label));
+    assert!(dimension_rects.iter().all(|rect| rect.height() >= 70.0));
+    assert!(dimension_rects.windows(2).all(|pair| pair[0].right() <= pair[1].left()));
+
+    let mut state = sample_state();
+    state.ribbon_tab = RibbonTab::Presentation;
+    let mut medium = ribbon_harness(state, 1600.0);
+    for _ in 0..5 {
+        medium.run();
+    }
+    let medium_pdf = ribbon_button(&medium, &UiCommand::ExportPdf.label(medium.state()));
+    assert!(medium_pdf.height() >= 70.0, "buttons should expand whenever they fit: {medium_pdf:?}");
+
+    let mut state = sample_state();
+    state.ribbon_tab = RibbonTab::Presentation;
+    let mut narrow = ribbon_harness(state, 1100.0);
+    for _ in 0..3 {
+        narrow.run();
+    }
+    let pdf = ribbon_button(&narrow, &UiCommand::ExportPdf.label(narrow.state()));
+    assert!(pdf.height() < 30.0, "compact export controls should stack: {pdf:?}");
+}
+
 /// Double-clicking a tab collapses the ribbon to its tabs; a click shows a
 /// tab's panel over the views, and running a command closes it.
 #[test]

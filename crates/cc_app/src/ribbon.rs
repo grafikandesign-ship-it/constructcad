@@ -493,6 +493,9 @@ const SCROLL_STEP: f32 = 240.0;
 
 /// Keep large windows balanced without pulling sparse tabs too far apart.
 const MAX_GROUP_PADDING: f32 = 88.0;
+/// Approximate extra width of five full-size dimension and three export buttons.
+/// Once the wide row is measured, its actual width replaces this estimate.
+const PRESENTATION_INLINE_EXTRA: f32 = 420.0;
 
 /// What the ribbon row measured last frame: group widths, offset and visible width.
 #[derive(Clone, Default)]
@@ -500,6 +503,8 @@ struct RowExtent {
     /// Intrinsic widths measured for this tab's groups in the last frame.
     groups: Vec<f32>,
     padding: f32,
+    compact_natural: f32,
+    inline_natural: f32,
     offset: f32,
     visible: f32,
     /// Offset an arrow asked for, applied on the next frame.
@@ -519,11 +524,21 @@ fn ribbon_group_count(tab: RibbonTab) -> usize {
     }
 }
 
+fn presentation_inline(extent: &RowExtent, available: f32) -> bool {
+    let needed = if extent.inline_natural > 0.0 {
+        extent.inline_natural
+    } else {
+        extent.compact_natural + PRESENTATION_INLINE_EXTRA
+    };
+    extent.compact_natural > 0.0 && available >= needed + 20.0
+}
+
 /// The active tab's groups. When they are wider than the window they
 /// scroll sideways, with arrows at the ends (and the mouse wheel).
 fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
     let id = egui::Id::new(("ribbon-row", state.ribbon_tab as u8));
     let mut extent: RowExtent = ui.ctx().data(|d| d.get_temp(id)).unwrap_or_default();
+    let inline = state.ribbon_tab == RibbonTab::Presentation && presentation_inline(&extent, available);
     let count = ribbon_group_count(state.ribbon_tab);
     let natural: f32 = extent.groups.iter().sum();
     let overflow = natural > available + 0.5;
@@ -564,7 +579,7 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
                     RibbonTab::File => file_tab(ui, state),
                     RibbonTab::Architecture => architecture_tab(ui, state),
                     RibbonTab::Visualization => visualization_tab(ui, state),
-                    RibbonTab::Presentation => presentation_tab(ui, state),
+                    RibbonTab::Presentation => presentation_tab(ui, state, inline),
                     RibbonTab::Modify => modify_tab(ui, state),
                     RibbonTab::Structure => structure_tab(ui, state),
                     RibbonTab::Mep => mep_tab(ui, state),
@@ -583,12 +598,23 @@ fn tab_row(ui: &mut Ui, state: &mut AppState, available: f32) {
         extent.visible = out.inner_rect.width();
     });
     let measured_natural: f32 = extent.groups.iter().sum();
+    if state.ribbon_tab == RibbonTab::Presentation {
+        if inline {
+            extent.inline_natural = measured_natural;
+        } else {
+            extent.compact_natural = measured_natural;
+        }
+    }
     let next_padding = if extent.groups.len() == count && measured_natural <= available + 0.5 {
         ((available - measured_natural) / (2 * count) as f32).clamp(0.0, MAX_GROUP_PADDING)
     } else {
         0.0
     };
-    if (measured_natural > available + 0.5) != overflow || (next_padding - extent.padding).abs() > 0.5 {
+    let next_inline = state.ribbon_tab == RibbonTab::Presentation && presentation_inline(&extent, available);
+    if (measured_natural > available + 0.5) != overflow
+        || (next_padding - extent.padding).abs() > 0.5
+        || next_inline != inline
+    {
         // The arrows or group cells changed: lay out again.
         ui.ctx().request_repaint();
     }
@@ -794,7 +820,7 @@ fn visualization_tab(ui: &mut Ui, state: &mut AppState) {
     group(ui, t!("group-navigate"), |ui| command_button(ui, state, UiCommand::ZoomFit));
 }
 
-fn presentation_tab(ui: &mut Ui, state: &mut AppState) {
+fn presentation_tab(ui: &mut Ui, state: &mut AppState, inline: bool) {
     let levels: Vec<_> = state.project().levels.iter().map(|l| (l.id, l.name.clone())).collect();
     group(ui, t!("group-create-views"), |ui| {
         for command in [UiCommand::FloorPlan, UiCommand::CeilingPlan] {
@@ -832,18 +858,27 @@ fn presentation_tab(ui: &mut Ui, state: &mut AppState) {
         command_button(ui, state, UiCommand::Sheet);
     });
     group(ui, t!("group-export"), |ui| {
-        stacks(ui, state, &[&[UiCommand::ExportPdf, UiCommand::ExportSvg, UiCommand::ExportImage]]);
+        let exports = [UiCommand::ExportPdf, UiCommand::ExportSvg, UiCommand::ExportImage];
+        if inline {
+            command_buttons(ui, state, &exports);
+        } else {
+            stacks(ui, state, &[&exports]);
+        }
     });
     group(ui, t!("group-dimension"), |ui| {
         use DimensionMode::*;
-        stacks(
-            ui,
-            state,
-            &[
-                &[UiCommand::Dimension(Aligned), UiCommand::Dimension(Linear), UiCommand::Dimension(Angular)],
-                &[UiCommand::Dimension(Radial), UiCommand::Dimension(Diameter)],
-            ],
-        );
+        let dimensions = [
+            UiCommand::Dimension(Aligned),
+            UiCommand::Dimension(Linear),
+            UiCommand::Dimension(Angular),
+            UiCommand::Dimension(Radial),
+            UiCommand::Dimension(Diameter),
+        ];
+        if inline {
+            command_buttons(ui, state, &dimensions);
+        } else {
+            stacks(ui, state, &[&dimensions[..3], &dimensions[3..]]);
+        }
     });
     group(ui, t!("group-text"), |ui| command_buttons(ui, state, &[UiCommand::Text, UiCommand::AddLeader]));
     group(ui, t!("group-tags"), |ui| command_button(ui, state, UiCommand::StructureTags));
