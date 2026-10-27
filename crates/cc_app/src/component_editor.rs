@@ -749,7 +749,7 @@ mod file_tests {
     #[test]
     fn loading_a_component_file_adds_renamed_types_in_one_step() {
         let mut state = AppState::new(Document::new(crate::actions::new_project()));
-        let file = cc_core::component_file::extract(state.project(), "Mesa").unwrap();
+        let file = cc_core::component_file::extract(state.project(), &t!("tpl-comp-table")).unwrap();
         let text = cc_core::component_file::to_ron(&file).unwrap();
         let path = std::env::temp_dir().join(format!("ccad-mesa-{}.ccomp", std::process::id()));
         std::fs::write(&path, text).unwrap();
@@ -759,7 +759,7 @@ mod file_tests {
         let crate::tools::Tool::Component { type_id: first } = state.tool.clone() else { panic!("tool") };
         assert_eq!(state.session.doc.undo_depth(), depth + 1);
         assert_eq!(state.project().types_of(Category::Component).count(), before + 1);
-        assert_eq!(state.project().type_name(first), "Mesa 120 x 80 (2)");
+        assert_eq!(state.project().type_name(first), format!("{} (2)", t!("tpl-type-table")));
         assert!(matches!(state.tool, crate::tools::Tool::Component { type_id } if type_id == first));
         state.session.doc.undo();
         assert_eq!(state.project().types_of(Category::Component).count(), before);

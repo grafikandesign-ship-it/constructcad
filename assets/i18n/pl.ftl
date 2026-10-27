@@ -214,7 +214,6 @@ group-horizontal = Stropy i dachy
 group-selection = Zaznaczenie
 group-history = Historia
 group-create-views = Utwórz
-group-documentation = Dokumentacja
 group-navigate = Nawigacja
 
 # Narzędzia
@@ -318,7 +317,6 @@ msg-export-failed = Nie można wyeksportować pliku: { $error }
 msg-imported = Zaimportowano z { $path }, elementy: { $count }
 msg-imported-skipped = Zaimportowano z { $path }, elementy: { $count } (pominięte nieobsługiwane: { $skipped })
 msg-imported-generic = Z tego jako obiekty ogólne z zachowaniem klasy IFC: { $count }.
-section-ifc = IFC
 prop-ifc-class = Klasa IFC
 prop-ifc-predefined = Typ predefiniowany
 prop-ifc-object-type = Typ obiektu

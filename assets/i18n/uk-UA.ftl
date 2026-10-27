@@ -214,7 +214,6 @@ group-horizontal = Перекриття та дахи
 group-selection = Виділення
 group-history = Історія
 group-create-views = Створити
-group-documentation = Документація
 group-navigate = Навігація
 
 # Інструменти
@@ -318,7 +317,6 @@ msg-export-failed = Не вдалося експортувати файл: { $er
 msg-imported = Імпортовано з { $path }. Кількість елементів: { $count }.
 msg-imported-skipped = Імпортовано з { $path }. Кількість елементів: { $count }; непідтримуваних елементів пропущено: { $skipped }.
 msg-imported-generic = Об’єктів, імпортованих як узагальнені компоненти зі збереженням класу IFC: { $count }.
-section-ifc = IFC
 prop-ifc-class = Клас IFC
 prop-ifc-predefined = Попередньо визначений тип
 prop-ifc-object-type = Тип об’єкта

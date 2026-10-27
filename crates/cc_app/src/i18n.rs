@@ -22,7 +22,7 @@ mod tests {
     /// Every `t!("...")` key used in the sources must exist in the translations.
     #[test]
     fn all_keys_translated() {
-        let messages = parse_messages(Language::PtBr.source());
+        let messages = parse_messages(Language::DEFAULT.source());
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let mut missing = Vec::new();
         // The app's sources and the engine's, which share the messages.

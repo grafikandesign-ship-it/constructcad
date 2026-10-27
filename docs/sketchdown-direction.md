@@ -37,4 +37,8 @@ The File, Modify, Structure, MEP and Manage tabs stay available. The icons are o
 
 Sketchdown's existing `.igz` work remains a reference and source for the later modeling workspace; it is not the new architectural file format. No migration of the Bergem model is assumed complete by creating this fork.
 
+## Current priority: language management
+
+Before refining construction commands, make the fork's language behavior predictable. Italian is the first-run interface and the first editorial reference. The language can be changed on the home screen before opening a project or in File settings; saved choices and `--lang` remain effective. Translation keys stay aligned across all supported languages, while names inside existing projects stay untouched. See [localization.md](localization.md) for the terminology and maintenance rules.
+
 Upstream starting commit: `afbd26702c094215b63d83c0afec15ae5da2b136` (`francisreboucas/constructcad`, `main`).

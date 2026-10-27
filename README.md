@@ -70,11 +70,11 @@ At startup (at most once a day) the app asks the GitHub API for the latest relea
 
 ## Languages
 
-The interface is available in **English**, **Portuguese (Brazil)**, **Spanish**, **French**, **German**, **Italian**, **Polish** and **Ukrainian**, switchable under *File → Language*. The choice is saved between sessions. On first run the system language is used, and `--lang en|pt-BR|es|fr|de|it|pl|uk-UA` forces a language.
+The interface is available in **Italian**, **English**, **French**, **German**, **Spanish**, **Portuguese (Brazil)**, **Polish** and **Ukrainian**. This fork opens in Italian on first run; choose another language on the home screen or under *File → Language*. The choice is saved between sessions. `--lang it|en|fr|de|es|pt-BR|pl|uk-UA` overrides the saved choice for a launch.
 
 New projects get level, material, type and view names in the active language. Existing projects keep their names, since they are part of the data. The decimal separator follows the language (comma or point).
 
-Translations live in `assets/i18n/*.ftl`. A test ensures every language has the same keys and placeholders. To add a language, create the `.ftl` file and register it in `Language` (`crates/cc_app/src/i18n.rs`).
+Translations live in `assets/i18n/*.ftl`. A test ensures every language has the same keys and placeholders and no duplicate keys. To add a language, create the `.ftl` file and register it in `Language` (`crates/cc_engine/src/i18n.rs`). See [localization guidance](docs/localization.md).
 
 ## Features (MVP)
 

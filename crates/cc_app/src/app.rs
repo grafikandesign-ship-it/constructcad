@@ -46,9 +46,9 @@ impl ConstructApp {
     pub fn new(cc: &eframe::CreationContext<'_>, args: Args) -> Self {
         let Args { path, views, language } = args;
         crate::theme::apply(&cc.egui_ctx);
-        // Command line, then saved preference, then the operating system language.
+        // Command line, then saved preference, then the fork's Italian default.
         let saved = cc.storage.and_then(|s| s.get_string(LANGUAGE_KEY)).and_then(|c| Language::from_code(&c));
-        crate::i18n::set_language(language.or(saved).unwrap_or_else(Language::from_system));
+        crate::i18n::set_language(initial_language(language, saved));
         let mut state = AppState::new(Document::new(actions::new_project()));
         if let Some(recent) = cc.storage.and_then(|s| s.get_string(RECENT_KEY)) {
             state.recent = recent.lines().filter(|l| !l.is_empty()).map(std::path::PathBuf::from).collect();
@@ -81,6 +81,22 @@ impl ConstructApp {
         let dock = if named.is_empty() { initial_dock(state.project()) } else { named_dock(&named) };
         let dock_generation = state.generation;
         Self { state, dock, dock_generation }
+    }
+}
+
+fn initial_language(command_line: Option<Language>, saved: Option<Language>) -> Language {
+    command_line.or(saved).unwrap_or(Language::DEFAULT)
+}
+
+#[cfg(test)]
+mod language_tests {
+    use super::*;
+
+    #[test]
+    fn italian_is_first_run_default_and_explicit_choices_win() {
+        assert_eq!(initial_language(None, None), Language::It);
+        assert_eq!(initial_language(None, Some(Language::De)), Language::De);
+        assert_eq!(initial_language(Some(Language::Fr), Some(Language::De)), Language::Fr);
     }
 }
 

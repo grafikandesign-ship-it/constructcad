@@ -9,8 +9,8 @@ category-floor = Solai
 category-ceiling = Controsoffitti
 category-roof = Coperture
 
-# Browser di progetto
-browser-title = Browser di progetto
+# Navigatore di progetto
+browser-title = Navigatore di progetto
 browser-floor-plans = Piante
 browser-ceiling-plans = Piante dei controsoffitti
 browser-3d-views = Viste 3D
@@ -39,7 +39,7 @@ ribbon-visualization = Visualizzazione
 ribbon-presentation = Presentazione
 ribbon-modify = Modifica
 ribbon-view = Vista
-ribbon-manage = Gestisci
+ribbon-manage = Gestione
 schedule-fields = Campi e ordinamento…
 schedule-export-csv = Esporta CSV…
 dlg-schedule = Proprietà dell'abaco
@@ -111,7 +111,7 @@ tpl-type-railing = Ringhiera 1,10 m
 ribbon-annotate = Annota
 group-room = Locale
 group-datum = Riferimenti
-group-dimension = Quota
+group-dimension = Quote
 tool-room = Locale
 tool-grid = Griglia
 tool-dimension = Allineata
@@ -205,7 +205,7 @@ msg-macro-empty = Non è stato registrato nulla.
 msg-macro-saved = Macro salvata in { $path } ({ $count } passi)
 msg-macro-done = Macro completata: { $count } passi.
 msg-macro-failed = La macro si è fermata al passo { $step }: { $error }
-group-export = Esporta
+group-export = Esportazione
 group-import = Importa
 group-settings = Impostazioni
 group-help = Guida
@@ -213,8 +213,7 @@ group-build = Costruisci
 group-horizontal = Solai e coperture
 group-selection = Selezione
 group-history = Cronologia
-group-create-views = Crea
-group-documentation = Documentazione
+group-create-views = Viste
 group-navigate = Naviga
 
 # Strumenti
@@ -318,14 +317,13 @@ msg-export-failed = Impossibile esportare il file: { $error }
 msg-imported = Importato da { $path }: { $count } elementi
 msg-imported-skipped = Importato da { $path }: { $count } elementi ({ $skipped } non supportati sono stati ignorati)
 msg-imported-generic = { $count } di essi sono stati importati come oggetti generici che mantengono la loro classe IFC.
-section-ifc = IFC
 prop-ifc-class = Classe IFC
 prop-ifc-predefined = Tipo predefinito
 prop-ifc-object-type = Tipo di oggetto
 section-type-set = { $name } (tipo)
 msg-import-failed = Impossibile importare il file: { $error }
 msg-no-gpu = La vista 3D richiede il renderer wgpu.
-msg-no-views-open = Apri una vista dal Browser di progetto.
+msg-no-views-open = Apri una vista dal Navigatore di progetto.
 
 # Etichette di disegno
 label-offset = Distanza:
@@ -587,12 +585,12 @@ tx-modify-material = Modifica materiale
 tx-project-info = Informazioni sul progetto
 
 # Lingua
-settings-language = Lingua
+settings-language = Lingua dell'interfaccia
 settings-theme = Tema
 theme-system = Sistema
 theme-light = Chiaro
 theme-dark = Scuro
-msg-language-changed = Lingua cambiata. I nuovi progetti useranno nomi in questa lingua.
+msg-language-changed = Lingua dell'interfaccia aggiornata. I nuovi progetti useranno nomi in questa lingua; quelli esistenti manterranno i propri nomi.
 
 # Errori dei file
 err-io = errore di lettura/scrittura ({ $detail })
@@ -603,7 +601,7 @@ err-version = il file usa la versione di formato { $version }; questa versione d
 # Modello di nuovo progetto (nomi di livelli, materiali, tipi e viste)
 tpl-project-name = Nuovo progetto
 tpl-level-ground = Piano terra
-tpl-level-first = Livello 1
+tpl-level-first = Piano primo
 tpl-mat-masonry = Muratura
 tpl-mat-plaster = Intonaco
 tpl-mat-concrete = Calcestruzzo

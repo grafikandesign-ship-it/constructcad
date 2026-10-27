@@ -214,7 +214,6 @@ group-horizontal = Pisos e coberturas
 group-selection = Seleção
 group-history = Histórico
 group-create-views = Criar
-group-documentation = Documentação
 group-navigate = Navegar
 
 # Ferramentas
@@ -318,7 +317,6 @@ msg-export-failed = Não foi possível exportar o arquivo: { $error }
 msg-imported = Importado de { $path }: { $count } elementos
 msg-imported-skipped = Importado de { $path }: { $count } elementos ({ $skipped } não suportados foram ignorados)
 msg-imported-generic = { $count } deles vieram como objetos genéricos que mantêm sua classe IFC.
-section-ifc = IFC
 prop-ifc-class = Classe IFC
 prop-ifc-predefined = Tipo predefinido
 prop-ifc-object-type = Tipo de objeto

@@ -214,7 +214,6 @@ group-horizontal = Floors & Roofs
 group-selection = Selection
 group-history = History
 group-create-views = Create
-group-documentation = Documentation
 group-navigate = Navigate
 
 # Tools
@@ -318,7 +317,6 @@ msg-export-failed = Could not export the file: { $error }
 msg-imported = Imported from { $path }: { $count } elements
 msg-imported-skipped = Imported from { $path }: { $count } elements ({ $skipped } unsupported were skipped)
 msg-imported-generic = { $count } of them came in as generic objects keeping their IFC class.
-section-ifc = IFC
 prop-ifc-class = IFC Class
 prop-ifc-predefined = Predefined Type
 prop-ifc-object-type = Object Type

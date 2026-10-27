@@ -214,7 +214,6 @@ group-horizontal = Decken & Dächer
 group-selection = Auswahl
 group-history = Verlauf
 group-create-views = Erstellen
-group-documentation = Dokumentation
 group-navigate = Navigieren
 
 # Werkzeuge
@@ -318,7 +317,6 @@ msg-export-failed = Die Datei konnte nicht exportiert werden: { $error }
 msg-imported = Importiert aus { $path }: { $count } Bauteile
 msg-imported-skipped = Importiert aus { $path }: { $count } Bauteile ({ $skipped } nicht unterstützte übersprungen)
 msg-imported-generic = { $count } davon wurden als allgemeine Objekte mit ihrer IFC-Klasse übernommen.
-section-ifc = IFC
 prop-ifc-class = IFC-Klasse
 prop-ifc-predefined = Vordefinierter Typ
 prop-ifc-object-type = Objekttyp

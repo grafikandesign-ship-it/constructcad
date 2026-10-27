@@ -19,13 +19,16 @@ pub enum Language {
 }
 
 impl Language {
+    /// First-run language of the Sketchdown fork.
+    pub const DEFAULT: Language = Language::It;
+
     pub const ALL: [Language; 8] = [
-        Language::PtBr,
+        Language::It,
         Language::En,
-        Language::Es,
         Language::Fr,
         Language::De,
-        Language::It,
+        Language::Es,
+        Language::PtBr,
         Language::Pl,
         Language::Uk,
     ];
@@ -60,6 +63,9 @@ impl Language {
 
     pub fn from_code(code: &str) -> Option<Language> {
         let code = code.to_ascii_lowercase();
+        if code.len() != 2 && (code.len() <= 3 || !matches!(code.as_bytes().get(2), Some(b'-' | b'_'))) {
+            return None;
+        }
         let lang = match code.get(..2)? {
             "pt" => Language::PtBr,
             "en" => Language::En,
@@ -74,9 +80,9 @@ impl Language {
         Some(lang)
     }
 
-    /// Language of the operating system, English when unsupported.
+    /// Language of the operating system, Italian when unsupported.
     pub fn from_system() -> Language {
-        sys_locale::get_locale().and_then(|l| Language::from_code(&l)).unwrap_or(Language::En)
+        sys_locale::get_locale().and_then(|l| Language::from_code(&l)).unwrap_or(Language::DEFAULT)
     }
 
     /// The embedded message file of the language.
@@ -136,9 +142,9 @@ pub fn try_tr(key: &str) -> Option<String> {
     bundle(language()).get(key).cloned()
 }
 
-/// Translate `key`; falls back to Portuguese, then to the key itself so gaps are visible.
+/// Translate `key`; falls back to Italian, then to the key itself so gaps are visible.
 pub fn tr(key: &str) -> String {
-    try_tr(key).or_else(|| bundle(Language::PtBr).get(key).cloned()).unwrap_or_else(|| key.to_string())
+    try_tr(key).or_else(|| bundle(Language::DEFAULT).get(key).cloned()).unwrap_or_else(|| key.to_string())
 }
 
 /// Translate `key`, substituting `{ $name }` placeholders.
@@ -186,6 +192,8 @@ mod tests {
         assert_eq!(Language::from_code("uk-UA"), Some(Language::Uk));
         assert_eq!(Language::from_code("ja-JP"), None);
         assert_eq!(Language::from_code("p"), None);
+        assert_eq!(Language::from_code("item"), None);
+        assert_eq!(Language::from_code("italiano"), None);
         for l in Language::ALL {
             assert_eq!(Language::from_code(l.code()), Some(l));
         }
@@ -198,9 +206,15 @@ mod tests {
     /// Every language defines exactly the same keys with the same placeholders.
     #[test]
     fn languages_are_complete() {
-        let reference = parse_messages(Language::PtBr.source());
+        let reference = parse_messages(Language::DEFAULT.source());
         for lang in Language::ALL {
             let messages = parse_messages(lang.source());
+            let definitions = lang
+                .source()
+                .lines()
+                .filter(|line| !line.trim().is_empty() && !line.trim_start().starts_with('#') && line.contains('='))
+                .count();
+            assert_eq!(definitions, messages.len(), "{lang:?}: duplicate translation keys");
             let missing: Vec<_> = reference.keys().filter(|k| !messages.contains_key(*k)).collect();
             let extra: Vec<_> = messages.keys().filter(|k| !reference.contains_key(*k)).collect();
             assert!(missing.is_empty() && extra.is_empty(), "{lang:?}: missing {missing:?}, extra {extra:?}");

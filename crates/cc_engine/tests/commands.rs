@@ -875,7 +875,11 @@ fn foundations_under_columns_and_walls() {
     assert!((volume(&mut s, id(&raft)) - 24.0 * 0.3).abs() < 1e-9);
     // A pad needs a pad type.
     assert_eq!(
-        fails(&mut s, "footing_create", json!({"position": [0, 9], "type": "Radier 30 cm"})),
+        fails(
+            &mut s,
+            "footing_create",
+            json!({"position": [0, 9], "type": cc_engine::i18n::tr("tpl-type-footing-slab")})
+        ),
         ErrorCode::InvalidArguments
     );
     let pad = run(&mut s, "footing_create", json!({"position": [0, 9], "rotation": 45, "top_offset": -0.5}));
@@ -900,7 +904,11 @@ fn sloped_beams_and_steel_sections() {
     assert_eq!(run(&mut s, "element_get", json!({"id": second["created"]}))["params"]["top_offset"], json!(3.5));
 
     // An I profile: two 0.02 flanges and a 0.01 web in a 0.15 x 0.40 box.
-    let ty = run(&mut s, "type_duplicate", json!({"type": "Viga 15 x 40 cm", "name": "Perfil I", "elements": [beam]}));
+    let ty = run(
+        &mut s,
+        "type_duplicate",
+        json!({"type": cc_engine::i18n::tr("tpl-type-beam"), "name": "Perfil I", "elements": [beam]}),
+    );
     run(&mut s, "type_set", json!({"type": ty["id"], "params": {"shape": {"I": {"web": 0.01, "flange": 0.02}}}}));
     let area = 2.0 * 0.15 * 0.02 + 0.01 * (0.4 - 0.04);
     let d = derived(&mut s, beam);
@@ -910,7 +918,11 @@ fn sloped_beams_and_steel_sections() {
 
     // A column switching to a tube profile and to a pipe.
     let column = id(&run(&mut s, "column_create", json!({"position": [9, 9], "height": 3.0})));
-    let ty = run(&mut s, "type_duplicate", json!({"type": "Pilar 20 x 20 cm", "name": "Tubo", "elements": [column]}));
+    let ty = run(
+        &mut s,
+        "type_duplicate",
+        json!({"type": cc_engine::i18n::tr("tpl-type-column-rect"), "name": "Tubo", "elements": [column]}),
+    );
     let tube = json!({"Profile": {"width": 0.2, "depth": 0.2, "shape": {"Tube": {"wall": 0.01}}}});
     run(&mut s, "type_set", json!({"type": ty["id"], "params": {"section": tube}}));
     let volume = derived(&mut s, column)["volume"].as_f64().unwrap();
@@ -935,7 +947,7 @@ fn slabs_join_their_supports_and_the_analytical_model() {
     let slab = id(&run(
         &mut s,
         "floor_create",
-        json!({"boundary": [[-1, -1], [7, -1], [7, 3], [-1, 3]], "level": "Pavimento 1", "offset": 0.0}),
+        json!({"boundary": [[-1, -1], [7, -1], [7, 3], [-1, 3]], "level": cc_engine::i18n::tr("tpl-level-first"), "offset": 0.0}),
     ));
     let before = run(&mut s, "element_get", json!({"id": slab}))["derived"]["volume"].as_f64().unwrap();
     let out = run(&mut s, "slab_join_supports", json!({}));

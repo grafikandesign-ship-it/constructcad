@@ -571,14 +571,7 @@ fn file_tab(ui: &mut Ui, state: &mut AppState) {
     group(ui, t!("group-settings"), |ui| {
         ui.allocate_ui_with_layout(vec2(170.0, BUTTON_HEIGHT), Layout::top_down(Align::Min), |ui| {
             ui.add_space(6.0);
-            ui.label(theme::muted(t!("settings-language")).size(12.0));
-            let mut lang = crate::i18n::language();
-            egui::ComboBox::from_id_salt("language").width(150.0).selected_text(lang.native_name()).show_ui(ui, |ui| {
-                for l in crate::i18n::Language::ALL {
-                    ui.selectable_value(&mut lang, l, l.native_name());
-                }
-            });
-            actions::set_language(state, lang);
+            language_picker(ui, state, 150.0);
         });
         ui.allocate_ui_with_layout(vec2(130.0, BUTTON_HEIGHT), Layout::top_down(Align::Min), |ui| {
             ui.add_space(6.0);
@@ -593,6 +586,18 @@ fn file_tab(ui: &mut Ui, state: &mut AppState) {
         });
     });
     group(ui, t!("group-help"), |ui| command_buttons(ui, state, &[UiCommand::About, UiCommand::CheckUpdates]));
+}
+
+/// The same language choice is available before opening a project and in File settings.
+pub fn language_picker(ui: &mut Ui, state: &mut AppState, width: f32) {
+    ui.label(theme::muted(t!("settings-language")).size(12.0));
+    let mut lang = crate::i18n::language();
+    egui::ComboBox::from_id_salt("language").width(width).selected_text(lang.native_name()).show_ui(ui, |ui| {
+        for choice in crate::i18n::Language::ALL {
+            ui.selectable_value(&mut lang, choice, choice.native_name());
+        }
+    });
+    actions::set_language(state, lang);
 }
 
 fn place(category: Category) -> UiCommand {

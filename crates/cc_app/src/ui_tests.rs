@@ -210,7 +210,7 @@ fn palette_runs_commands() {
     let mut state = sample_state();
     crate::palette::toggle(&mut state);
     let mut harness = palette_harness(state);
-    harness.get_by_role(Role::TextInput).type_text("parede");
+    harness.get_by_role(Role::TextInput).type_text(&t!("tool-wall"));
     harness.run();
     harness.key_press(egui::Key::Enter);
     harness.run();

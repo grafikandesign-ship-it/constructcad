@@ -53,6 +53,10 @@ fn sidebar(ui: &mut Ui, state: &mut AppState) {
     ui.separator();
     ui.add_space(8.0);
     nav_item(ui, Icon::Open, &t!("home-recent"), true);
+    ui.add_space(20.0);
+    ui.separator();
+    ui.add_space(8.0);
+    crate::ribbon::language_picker(ui, state, 180.0);
 }
 
 fn round_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
