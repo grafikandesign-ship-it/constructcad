@@ -87,6 +87,8 @@ pub struct AppState {
     /// Options of the pipe, conduit and device tools.
     pub mep: crate::tools::MepOptions,
     pub active_view: Option<ViewId>,
+    /// Most recently focused floor plan, so F2 returns to the same level.
+    pub last_floor_plan: Option<ViewId>,
     pub view2d: HashMap<ViewId, View2DState>,
     pub view3d: HashMap<ViewId, View3DState>,
     /// Views the dock should open (or focus) this frame.
@@ -165,6 +167,7 @@ impl AppState {
             truss: Default::default(),
             mep: Default::default(),
             active_view: None,
+            last_floor_plan: None,
             view2d: HashMap::new(),
             view3d: HashMap::new(),
             open_requests: Vec::new(),

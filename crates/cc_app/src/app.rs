@@ -100,14 +100,10 @@ mod language_tests {
     }
 }
 
-/// First floor plan on the left, the 3D view on the right.
+/// Start with a floor plan; 3D opens on demand with F3.
 fn initial_dock(project: &Project) -> DockState<ViewId> {
     let plan = project.views_of(ViewCategory::FloorPlan).next().map(|v| v.id);
-    let threed = project.views_of(ViewCategory::ThreeD).next().map(|v| v.id);
     let mut dock = DockState::new(plan.into_iter().collect());
-    if let Some(t3) = threed {
-        dock.main_surface_mut().split_right(NodeIndex::root(), 0.55, vec![t3]);
-    }
     // Focus the plan so the properties palette shows it from the start.
     if let Some(path) = plan.and_then(|p| dock.find_tab(&p)) {
         dock.set_focused_node_and_surface(path.node_path());
@@ -232,6 +228,12 @@ impl ConstructApp {
         if ctx.memory(|m| m.focused().is_some()) {
             return;
         }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F2)) {
+            actions::open_default_plan(state);
+        }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F3)) {
+            actions::open_default_3d(state);
+        }
         let (escape, delete, backspace, space, events) = ctx.input(|i| {
             let keys = (i.key_pressed(Key::Escape), i.key_pressed(Key::Delete), i.key_pressed(Key::Backspace));
             (keys.0, keys.1, keys.2, i.key_pressed(Key::Space), i.events.clone())
@@ -340,6 +342,11 @@ impl ConstructApp {
             }
         }
         state.active_view = active_tab(&mut self.dock);
+        if let Some(id) = state.active_view
+            && state.project().view(id).is_some_and(|v| v.category() == ViewCategory::FloorPlan)
+        {
+            state.last_floor_plan = Some(id);
+        }
     }
 }
 
@@ -453,6 +460,25 @@ impl eframe::App for ConstructApp {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn startup_opens_only_a_floor_plan_and_f2_returns_to_the_last_one() {
+        let mut state = AppState::new(Document::new(actions::new_project()));
+        let plans: Vec<_> = state.project().views_of(ViewCategory::FloorPlan).map(|v| v.id).collect();
+        assert!(!plans.is_empty());
+        let dock = initial_dock(state.project());
+        assert_eq!(dock.iter_all_tabs().map(|(_, tab)| *tab).collect::<Vec<_>>(), vec![plans[0]]);
+        state.last_floor_plan = plans.last().copied();
+        actions::open_default_plan(&mut state);
+        assert_eq!(state.open_requests, vec![*plans.last().unwrap()]);
+        actions::open_default_3d(&mut state);
+        assert!(
+            state
+                .open_requests
+                .last()
+                .is_some_and(|id| { state.project().view(*id).is_some_and(|v| v.category() == ViewCategory::ThreeD) })
+        );
+    }
 
     #[test]
     fn closing_the_last_tab_leaves_no_active_view() {

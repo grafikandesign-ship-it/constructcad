@@ -258,9 +258,15 @@ fn element_props(ui: &mut Ui, state: &mut AppState, id: ElementId) {
                 }
             });
             section(ui, "orientation", t!("section-orientation"), |ui| {
-                for (label, field, value) in
-                    [(t!("prop-flip-facing"), "ff", h.flip_facing), (t!("prop-flip-hand"), "fh", h.flip_hand)]
+                if category == Category::Door
+                    && ui
+                        .add_enabled(!state.project().is_pinned(id), egui::Button::new(t!("action-cycle-orientation")))
+                        .clicked()
                 {
+                    crate::tools::rotate_selection(state);
+                }
+                let fields = [(t!("prop-flip-facing"), "ff", h.flip_facing), (t!("prop-flip-hand"), "fh", h.flip_hand)];
+                for (label, field, value) in fields.into_iter().take(if category == Category::Door { 2 } else { 1 }) {
                     let mut v = value;
                     if row(ui, &label, |ui| ui.checkbox(&mut v, "")).changed() {
                         crate::engine_edit::element(state, id, None, |x| {

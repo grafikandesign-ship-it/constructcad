@@ -608,8 +608,9 @@ impl Command for ElementMoveEnd {
 }
 
 /// Turn elements a quarter: components and columns rotate 90° about their
-/// insertion point; doors and windows flip to the other side of their wall
-/// (the Space key on a selection). Others and pinned elements are left alone.
+/// insertion point; doors cycle through both hinge and facing directions;
+/// windows flip to the other side of their wall (Space on a selection).
+/// Others and pinned elements are left alone.
 #[derive(Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ElementsTurn {
@@ -643,7 +644,15 @@ impl Command for ElementsTurn {
                 match &mut el.kind {
                     ElementKind::Component(c) => c.rotation_deg = (c.rotation_deg + 90.0).rem_euclid(360.0),
                     ElementKind::Column(c) => c.rotation_deg = (c.rotation_deg + 90.0).rem_euclid(360.0),
-                    ElementKind::Door(h) | ElementKind::Window(h) => h.flip_facing = !h.flip_facing,
+                    ElementKind::Door(h) => {
+                        if h.flip_hand {
+                            h.flip_hand = false;
+                            h.flip_facing = !h.flip_facing;
+                        } else {
+                            h.flip_hand = true;
+                        }
+                    }
+                    ElementKind::Window(h) => h.flip_facing = !h.flip_facing,
                     _ => {}
                 }
             }

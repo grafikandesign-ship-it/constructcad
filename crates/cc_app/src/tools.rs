@@ -2774,7 +2774,9 @@ mod tests {
         };
         assert_eq!(b.rotation_deg, (a.rotation_deg + 90.0).rem_euclid(360.0));
         assert_eq!(a.position, b.position);
-        assert!(matches!(state.project().element(door).map(|e| &e.kind), Some(ElementKind::Door(h)) if h.flip_facing));
+        assert!(
+            matches!(state.project().element(door).map(|e| &e.kind), Some(ElementKind::Door(h)) if h.flip_hand && !h.flip_facing)
+        );
         // Nothing turnable selected: no undo step.
         state.selection = [wall].into_iter().collect();
         assert!(!rotate_selection(&mut state));

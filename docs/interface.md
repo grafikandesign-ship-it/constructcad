@@ -89,7 +89,8 @@ The engine's file commands (`project_open`, `project_save`, `ifc_import`, `ifc_e
 | Ctrl+X / Ctrl+C / Ctrl+V | Cut / Copy / Paste |
 | Delete | Delete the selection |
 | Esc | Cancel the operation, leave the tool, clear the selection |
-| Space | Rotate or flip the selection or the element being placed |
+| F2 / F3 | Return to the last floor plan / open the default 3D view |
+| Space | Rotate components, cycle a door through four swings, or flip a window |
 
 Two-letter keys work while a view has the focus and no text field is being edited. The README lists them all. Each tooltip shows its own shortcut as well.
 

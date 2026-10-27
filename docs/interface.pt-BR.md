@@ -89,7 +89,8 @@ Os comandos de arquivo do motor (`project_open`, `project_save`, `ifc_import`, `
 | Ctrl+X / Ctrl+C / Ctrl+V | Recortar / Copiar / Colar |
 | Delete | Excluir a seleção |
 | Esc | Cancelar a operação, sair da ferramenta, limpar a seleção |
-| Espaço | Girar ou inverter a seleção ou o elemento sendo posicionado |
+| F2 / F3 | Voltar à última planta / abrir a vista 3D padrão |
+| Espaço | Girar componentes, percorrer os quatro sentidos da porta ou inverter uma janela |
 
 As teclas de duas letras funcionam com o foco numa vista e nenhum campo de texto em edição. O README lista todas elas, e cada dica mostra também o seu atalho.
 

@@ -605,6 +605,7 @@ impl UiCommand {
             Open => "Ctrl+O",
             Save => "Ctrl+S",
             SaveAs => "Ctrl+Shift+S",
+            Default3D => "F3",
             CloseProject => "Ctrl+W",
             Undo => "Ctrl+Z",
             Redo => "Ctrl+Y",

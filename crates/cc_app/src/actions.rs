@@ -131,6 +131,16 @@ pub fn delete_level(state: &mut AppState, level: LevelId) {
     run(state, levels::LevelDelete { level: Ref::Id(level.0) });
 }
 
+/// Return to the last focused floor plan, or the first one in the project.
+pub fn open_default_plan(state: &mut AppState) {
+    let recent = state
+        .last_floor_plan
+        .filter(|id| state.project().view(*id).is_some_and(|v| v.category() == ViewCategory::FloorPlan));
+    if let Some(id) = recent.or_else(|| state.project().views_of(ViewCategory::FloorPlan).next().map(|v| v.id)) {
+        state.open_view(id);
+    }
+}
+
 /// Open the project's first 3D view, creating one when there is none.
 pub fn open_default_3d(state: &mut AppState) {
     let existing = state.project().views_of(ViewCategory::ThreeD).next().map(|v| v.id);
