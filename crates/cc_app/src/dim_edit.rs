@@ -474,6 +474,53 @@ mod tests {
     }
 
     #[test]
+    fn a_slightly_skewed_wall_shows_editable_references_on_both_sides() {
+        let mut state = sample();
+        let view = plan(&state);
+        let level = state.project().levels[0].id;
+        let wall_ty = state.project().default_type(Category::Wall).unwrap();
+        let mut add_wall = |start: DVec2, end: DVec2| {
+            state.create_element(
+                "wall".into(),
+                level,
+                wall_ty,
+                ElementKind::Wall(cc_core::Wall {
+                    start,
+                    end,
+                    base_offset: 0.0,
+                    height: 3.0,
+                    top: cc_core::WallTop::Unconnected,
+                    location_line: cc_core::LocationLine::Centerline,
+                    room_bounding: true,
+                    structural: false,
+                    join_start: false,
+                    join_end: false,
+                    bulge: 0.0,
+                }),
+            )
+        };
+        let x0 = 105.125;
+        let x1 = 109.25;
+        add_wall(DVec2::new(x0, 100.75), DVec2::new(x1, 100.75));
+        add_wall(DVec2::new(x0, 108.75), DVec2::new(x1, 108.75));
+        let selected = add_wall(DVec2::new(x0, 103.75), DVec2::new(x1, 103.76342977218896));
+        state.sync();
+        state.selection = BTreeSet::from([selected]);
+        let drawing = state.drawing(view).unwrap();
+        let dimensions = temps(&state, &drawing);
+        assert_eq!(dimensions.len(), 2, "{dimensions:?}");
+        assert!(dimensions.iter().all(|dim| dim.editable));
+        assert!(dimensions.iter().any(|dim| dim.to.y < dim.from.y));
+        assert!(dimensions.iter().any(|dim| dim.to.y > dim.from.y));
+        let lower = dimensions.iter().find(|dim| dim.to.y < dim.from.y).unwrap();
+        let current = lower.from.distance(lower.to);
+        let target = Target::Offset { ids: vec![selected], dir: lower.away, current };
+        apply_text(&mut state, &target, "4").unwrap();
+        let ElementKind::Wall(wall) = &state.project().element(selected).unwrap().kind else { panic!() };
+        assert!(((wall.start - DVec2::new(x0, 103.75)).dot(lower.away) - (4.0 - current)).abs() < 1e-9);
+    }
+
+    #[test]
     fn selected_doors_and_windows_show_their_width_instead_of_host_wall_segments() {
         let mut state = sample();
         let view = plan(&state);
@@ -537,18 +584,26 @@ fn nearest_along(
         if skip.contains(e) || !style_ok || !reference(e) {
             continue;
         }
-        let Some(u) = (*b - *a).try_normalize() else { continue };
+        let segment = *b - *a;
+        let length = segment.length();
+        let Some(u) = segment.try_normalize() else { continue };
         // Lines across the ray only (parallel to the element's side).
         if u.dot(dir).abs() > 0.02 {
             continue;
         }
-        let t = (*a - p).dot(dir);
+        // Intersect the actual segments. Projecting an endpoint onto the ray
+        // misses slightly skewed walls even when their plan lines cross it.
+        let denominator = dir.perp_dot(u);
+        if denominator.abs() < 1e-9 {
+            continue;
+        }
+        let delta = *a - p;
+        let t = delta.perp_dot(u) / denominator;
         if t <= 1e-6 || t > 50.0 {
             continue;
         }
-        // The ray must hit the segment.
-        let hit = p + dir * t;
-        if !crate::tools::point_on_segment(*a, *b, hit, 1e-6) {
+        let along = delta.perp_dot(dir) / denominator;
+        if along < -1e-6 || along > length + 1e-6 {
             continue;
         }
         if best.is_none_or(|d| t < d) {
