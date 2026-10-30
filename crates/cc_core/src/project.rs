@@ -8,6 +8,10 @@ use glam::DVec2;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+fn default_model_layer() -> String {
+    "0".into()
+}
+
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectInfo {
     /// Persistent unique id of the project.
@@ -37,6 +41,18 @@ pub struct Project {
     pub types: BTreeMap<ElementTypeId, ElementType>,
     pub elements: BTreeMap<ElementId, Element>,
     pub views: BTreeMap<ViewId, View>,
+    /// Named drawing layers. Layer `0` always exists implicitly.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
+    pub model_layers: std::collections::BTreeSet<String>,
+    /// Layer assigned to each element (absence means layer `0`).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub element_layers: BTreeMap<ElementId, String>,
+    /// Layers hidden in every graphical view, including sheets and 3D.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
+    pub hidden_layers: std::collections::BTreeSet<String>,
+    /// Layer used for newly created elements.
+    #[serde(default = "default_model_layer")]
+    pub current_layer: String,
     /// How quantities are displayed and typed.
     #[serde(default)]
     pub units: crate::Units,
@@ -89,6 +105,10 @@ impl Project {
             types: BTreeMap::new(),
             elements: BTreeMap::new(),
             views: BTreeMap::new(),
+            model_layers: Default::default(),
+            element_layers: Default::default(),
+            hidden_layers: Default::default(),
+            current_layer: default_model_layer(),
             units: crate::Units::default(),
             pinned: Default::default(),
             joins: Default::default(),
@@ -101,6 +121,18 @@ impl Project {
             phase_graphics: crate::PhaseGraphics::default(),
             next_id: 1,
         }
+    }
+
+    pub fn layer_exists(&self, name: &str) -> bool {
+        name == "0" || self.model_layers.contains(name)
+    }
+
+    pub fn layer_of(&self, id: ElementId) -> &str {
+        self.element_layers.get(&id).map(String::as_str).unwrap_or("0")
+    }
+
+    pub fn layer_visible(&self, id: ElementId) -> bool {
+        !self.hidden_layers.contains(self.layer_of(id))
     }
 
     /// A new project from the default architectural template (Brazilian Portuguese names).

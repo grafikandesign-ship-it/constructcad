@@ -9,6 +9,7 @@ pub mod foundation;
 pub mod framing;
 pub mod graphics;
 pub mod io;
+pub mod layers;
 pub mod levels;
 pub mod materials;
 pub mod mep;

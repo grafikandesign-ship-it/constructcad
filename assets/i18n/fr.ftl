@@ -1590,3 +1590,14 @@ ph-delete-filter = Supprimer le filtre
 ph-default-filter-name = Filtre { $n }
 ph-filter-none = Aucun
 ph-not-demolished = Aucune
+
+status-level = Niveau
+status-manage-levels = Gérer les niveaux…
+status-layer = Calque
+layer-toggle-visibility = Afficher ou masquer le calque
+layer-assign-selection = Affecter la sélection au calque courant
+layer-new-name = Nouveau calque
+layer-add = Ajouter
+layer-rename-name = Nouveau nom
+layer-rename = Renommer
+layer-delete-current = Supprimer le calque courant

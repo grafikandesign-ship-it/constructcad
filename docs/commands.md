@@ -14,6 +14,7 @@ Every command runs the same way from the desktop app, `ccad run` / `ccad script`
 - **Dimensions and text**: [`dimension_create`](#dimension_create), [`dimension_set_value`](#dimension_set_value), [`text_create`](#text_create), [`text_add_leader`](#text_add_leader), [`text_remove_leader`](#text_remove_leader)
 - **Types, components, materials**: [`type_set`](#type_set), [`type_duplicate`](#type_duplicate), [`type_delete`](#type_delete), [`component_create`](#component_create), [`material_create`](#material_create), [`material_duplicate`](#material_duplicate), [`material_rename`](#material_rename), [`material_set`](#material_set), [`material_delete`](#material_delete)
 - **Levels and views**: [`level_create`](#level_create), [`level_set`](#level_set), [`level_delete`](#level_delete), [`view_create`](#view_create), [`view_set`](#view_set), [`view_duplicate`](#view_duplicate), [`view_delete`](#view_delete), [`sheet_place_view`](#sheet_place_view), [`sheet_remove_viewport`](#sheet_remove_viewport)
+- **Drawing layers**: [`layers_list`](#layers_list), [`layer_create`](#layer_create), [`layer_rename`](#layer_rename), [`layer_delete`](#layer_delete), [`layer_set_visible`](#layer_set_visible), [`layer_activate`](#layer_activate), [`elements_set_layer`](#elements_set_layer)
 - **View graphics**: [`view_graphics_get`](#view_graphics_get), [`view_graphics_set`](#view_graphics_set), [`element_override_set`](#element_override_set), [`element_hide_in_view`](#element_hide_in_view), [`filters_list`](#filters_list), [`filter_create`](#filter_create), [`filter_set`](#filter_set), [`filter_delete`](#filter_delete), [`filter_elements`](#filter_elements), [`view_filter_add`](#view_filter_add), [`view_filter_set`](#view_filter_set), [`view_filter_remove`](#view_filter_remove), [`view_filter_move`](#view_filter_move), [`templates_list`](#templates_list), [`template_create`](#template_create), [`template_set`](#template_set), [`template_delete`](#template_delete), [`view_template_apply`](#view_template_apply), [`view_template_assign`](#view_template_assign), [`view_temporary`](#view_temporary), [`view_temporary_apply`](#view_temporary_apply)
 - **Phases**: [`phases_list`](#phases_list), [`phase_create`](#phase_create), [`phase_set`](#phase_set), [`phase_delete`](#phase_delete), [`elements_phase_set`](#elements_phase_set), [`elements_demolish`](#elements_demolish), [`phase_creation_set`](#phase_creation_set), [`phase_filters_list`](#phase_filters_list), [`phase_filter_create`](#phase_filter_create), [`phase_filter_set`](#phase_filter_set), [`phase_filter_delete`](#phase_filter_delete), [`phase_graphics_get`](#phase_graphics_get), [`phase_graphics_set`](#phase_graphics_set)
 
@@ -1236,6 +1237,65 @@ No parameters.
 |---|---|---|---|
 | `sheet` | id or name | required | A level, type, view or material: its numeric id or its name. |
 | `view` | id or name | required | A level, type, view or material: its numeric id or its name. |
+
+## Drawing layers
+
+### `layers_list`
+
+*query* — List named drawing layers, their visibility and the current layer.
+
+No parameters.
+
+### `layer_create`
+
+*edit* — Create a named drawing layer.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `name` | string | required | New layer name. |
+
+### `layer_rename`
+
+*edit* — Rename a drawing layer and all element assignments to it.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `name` | string | required | Existing layer name (layer `0` cannot be renamed). |
+| `new_name` | string | required | New layer name. |
+
+### `layer_delete`
+
+*edit* — Delete a drawing layer, moving its elements to layer `0`.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `name` | string | required | Layer name (layer `0` cannot be deleted). |
+
+### `layer_set_visible`
+
+*edit* — Show or hide a drawing layer in every graphical view.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `name` | string | required | Layer name. |
+| `visible` | boolean | required | Whether the layer is shown. |
+
+### `layer_activate`
+
+*edit* — Make a drawing layer current for newly created elements.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `name` | string | required | Layer name. |
+
+### `elements_set_layer`
+
+*edit* — Assign existing elements to a drawing layer.
+
+| Parameter | Type | | Description |
+|---|---|---|---|
+| `ids` | [id, …] | required | Element ids. |
+| `layer` | string | required | Layer name. |
 
 ## View graphics
 

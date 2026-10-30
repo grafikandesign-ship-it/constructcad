@@ -37,6 +37,9 @@ pub enum PendingAction {
 
 #[derive(Default)]
 pub struct Dialogs {
+    /// Name entered in the status-bar layer menu.
+    pub new_model_layer: String,
+    pub rename_model_layer: String,
     pub project_info: bool,
     pub units: bool,
     pub material_browser: crate::material_browser::Browser,

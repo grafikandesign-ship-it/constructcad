@@ -229,6 +229,15 @@ registry![
         views::SheetPlaceView,
         views::SheetRemoveViewport,
     ],
+    "Drawing layers" => [
+        layers::LayersList,
+        layers::LayerCreate,
+        layers::LayerRename,
+        layers::LayerDelete,
+        layers::LayerSetVisible,
+        layers::LayerActivate,
+        layers::ElementsSetLayer,
+    ],
     "View graphics" => [
         graphics::ViewGraphicsGet,
         graphics::ViewGraphicsSet,

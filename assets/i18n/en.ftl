@@ -291,6 +291,16 @@ status-length = Length: { $value }
 status-angle = Angle: { $value }°
 status-selected = { $count } selected
 status-unsaved-file = (unsaved)
+status-level = Level
+status-manage-levels = Manage levels…
+status-layer = Layer
+layer-toggle-visibility = Show or hide layer
+layer-assign-selection = Assign selection to current layer
+layer-new-name = New layer
+layer-add = Add
+layer-rename-name = New name
+layer-rename = Rename
+layer-delete-current = Delete current layer
 
 # Messages
 msg-plan-only = This tool works in plan views. Open a floor or ceiling plan.

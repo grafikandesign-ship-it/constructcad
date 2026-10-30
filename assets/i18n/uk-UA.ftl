@@ -1591,3 +1591,14 @@ ph-delete-filter = Видалити фільтр
 ph-default-filter-name = Фільтр { $n }
 ph-filter-none = Немає
 ph-not-demolished = Немає
+
+status-level = Рівень
+status-manage-levels = Керувати рівнями…
+status-layer = Шар
+layer-toggle-visibility = Показати або приховати шар
+layer-assign-selection = Призначити вибране поточному шару
+layer-new-name = Новий шар
+layer-add = Додати
+layer-rename-name = Нова назва
+layer-rename = Перейменувати
+layer-delete-current = Видалити поточний шар

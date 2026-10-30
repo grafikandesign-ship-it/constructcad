@@ -1590,3 +1590,14 @@ ph-delete-filter = Filter löschen
 ph-default-filter-name = Filter { $n }
 ph-filter-none = Keiner
 ph-not-demolished = Keine
+
+status-level = Geschoss
+status-manage-levels = Geschosse verwalten…
+status-layer = Ebene
+layer-toggle-visibility = Ebene ein- oder ausblenden
+layer-assign-selection = Auswahl der aktuellen Ebene zuweisen
+layer-new-name = Neue Ebene
+layer-add = Hinzufügen
+layer-rename-name = Neuer Name
+layer-rename = Umbenennen
+layer-delete-current = Aktuelle Ebene löschen

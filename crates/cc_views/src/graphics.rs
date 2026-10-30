@@ -96,7 +96,10 @@ impl<'a> Resolver<'a> {
 
     /// Whether the view draws everything as generated.
     pub fn is_trivial(&self) -> bool {
-        self.graphics.is_empty() && self.temporary.is_none_or(|t| t.is_empty()) && self.phase_trivial
+        self.graphics.is_empty()
+            && self.project.hidden_layers.is_empty()
+            && self.temporary.is_none_or(|t| t.is_empty())
+            && self.phase_trivial
     }
 
     /// The overrides of an element, or `None` when it is hidden. Ids that
@@ -107,7 +110,11 @@ impl<'a> Resolver<'a> {
         }
         let s = match self.project.element(id) {
             None => Some(GraphicOverride::default()),
-            Some(e) if self.temporary.is_some_and(|t| !t.shows(id, e.category())) => None,
+            Some(e)
+                if !self.project.layer_visible(id) || self.temporary.is_some_and(|t| !t.shows(id, e.category())) =>
+            {
+                None
+            }
             Some(e) => {
                 let (project, geom) = (self.project, self.geom);
                 match self.phase.map_or(Some(GraphicOverride::default()), |ph| ph.style(project, e)) {

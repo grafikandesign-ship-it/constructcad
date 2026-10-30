@@ -108,6 +108,21 @@ impl Project {
     /// Remove or reset invalid data; returns the number of repairs made.
     pub fn repair(&mut self) -> usize {
         let mut repairs = usize::from(self.units.repair());
+        let before = self.model_layers.len();
+        self.model_layers.retain(|name| !name.trim().is_empty() && name != "0" && name.len() <= 80);
+        repairs += before - self.model_layers.len();
+        if !self.layer_exists(&self.current_layer) {
+            self.current_layer = "0".into();
+            repairs += 1;
+        }
+        let names = &self.model_layers;
+        let elements = &self.elements;
+        let before = self.element_layers.len();
+        self.element_layers.retain(|id, name| elements.contains_key(id) && names.contains(name));
+        repairs += before - self.element_layers.len();
+        let before = self.hidden_layers.len();
+        self.hidden_layers.retain(|name| name == "0" || names.contains(name));
+        repairs += before - self.hidden_layers.len();
         repairs += self.materials.iter_mut().map(|m| m.repair()).sum::<usize>();
         for level in &mut self.levels {
             if !level.elevation.is_finite() {

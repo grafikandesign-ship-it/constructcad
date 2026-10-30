@@ -4,6 +4,8 @@
 
 ConstructCAD's window follows the layout desktop CAD and BIM users expect. The **quick access toolbar** sits at the top left. Below it is the **ribbon**, a row of tabs with groups of buttons. The **options bar** for the active tool comes next. The **project browser** is docked on the left and **properties** on the right; both can be resized. The **views** fill the space between them, and the **status bar** is at the bottom.
 
+The status bar has a **Level** menu that opens an existing floor plan for that level (or creates one if needed) and opens the level manager. Its **Layer** menu chooses the current drawing layer, shows or hides layers, assigns selected elements, and creates, renames or deletes named layers. New elements use the current layer; elements in older projects are on layer `0`. Layer visibility applies to plans, 3D views and sheets. Drawing layers organize elements independently of the material layers inside wall, floor and roof types.
+
 ## Commands and their tooltips
 
 Every button in the ribbon and the quick access toolbar runs an *interface command*. So does every two-letter shortcut and every entry of the command palette. Each command defines, in one place:

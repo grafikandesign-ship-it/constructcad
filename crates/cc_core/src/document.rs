@@ -13,6 +13,10 @@ struct Settings {
     info: ProjectInfo,
     levels: Vec<Level>,
     materials: Vec<Material>,
+    model_layers: std::collections::BTreeSet<String>,
+    element_layers: BTreeMap<ElementId, String>,
+    hidden_layers: std::collections::BTreeSet<String>,
+    current_layer: String,
     units: crate::Units,
     pinned: std::collections::BTreeSet<ElementId>,
     joins: std::collections::BTreeSet<(ElementId, ElementId)>,
@@ -31,6 +35,10 @@ impl Settings {
             info: p.info.clone(),
             levels: p.levels.clone(),
             materials: p.materials.clone(),
+            model_layers: p.model_layers.clone(),
+            element_layers: p.element_layers.clone(),
+            hidden_layers: p.hidden_layers.clone(),
+            current_layer: p.current_layer.clone(),
             units: p.units.clone(),
             pinned: p.pinned.clone(),
             joins: p.joins.clone(),
@@ -48,6 +56,10 @@ impl Settings {
         p.info = self.info;
         p.levels = self.levels;
         p.materials = self.materials;
+        p.model_layers = self.model_layers;
+        p.element_layers = self.element_layers;
+        p.hidden_layers = self.hidden_layers;
+        p.current_layer = self.current_layer;
         p.units = self.units;
         p.pinned = self.pinned;
         p.joins = self.joins;
@@ -178,6 +190,10 @@ impl<'a> EditCtx<'a> {
     /// Insert an element. Its `id` must come from [`EditCtx::alloc_id`].
     pub fn add_element(&mut self, mut element: Element) -> ElementId {
         let id = element.id;
+        if self.project.current_layer != "0" {
+            self.touch_settings();
+            self.project.element_layers.insert(id, self.project.current_layer.clone());
+        }
         // Copies of an element get their own persistent id.
         if element.uid.is_nil() || self.project.elements.values().any(|e| e.uid == element.uid && e.id != id) {
             element.uid = crate::Uid::generate();
@@ -208,6 +224,10 @@ impl<'a> EditCtx<'a> {
             pending.extend(self.project.rebar_of(id).map(|(e, _)| e.id));
             self.touch_element(id);
             self.project.elements.remove(&id);
+            if self.project.element_layers.contains_key(&id) {
+                self.touch_settings();
+                self.project.element_layers.remove(&id);
+            }
             if self.project.joined_with(id).next().is_some() {
                 self.touch_settings();
                 self.project.joins.retain(|&(a, b)| a != id && b != id);
@@ -409,6 +429,12 @@ impl<'a> EditCtx<'a> {
     pub fn systems_mut(&mut self) -> &mut BTreeMap<crate::SystemId, crate::MepSystem> {
         self.touch_settings();
         &mut self.project.systems
+    }
+
+    /// Drawing layer names, assignment, visibility and active layer.
+    pub fn layer_settings_mut(&mut self) -> &mut Project {
+        self.touch_settings();
+        self.project
     }
 
     /// View filters.

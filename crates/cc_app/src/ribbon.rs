@@ -1259,7 +1259,101 @@ pub fn status_bar(ui: &mut Ui, state: &mut AppState) {
                 .unwrap_or_else(|| t!("status-unsaved-file"));
             let dirty = if state.session.doc.is_dirty() { " *" } else { "" };
             ui.label(RichText::new(format!("{file}{dirty}")).color(PALETTE.text_faint));
+            ui.separator();
+            status_layers(ui, state);
+            ui.separator();
+            status_levels(ui, state);
         });
+    });
+}
+
+fn status_levels(ui: &mut Ui, state: &mut AppState) {
+    let active = state.active_level();
+    let levels: Vec<_> = state.project().levels.iter().map(|level| (level.id, level.name.clone())).collect();
+    let label = levels.iter().find(|(id, _)| Some(*id) == active).map(|(_, name)| name.as_str()).unwrap_or("—");
+    ui.menu_button(format!("{}: {label}", t!("status-level")), |ui| {
+        for (id, name) in &levels {
+            if ui.selectable_label(Some(*id) == active, name).clicked() {
+                let plan = state
+                    .project()
+                    .views_of(ViewCategory::FloorPlan)
+                    .find(|view| view.level() == Some(*id))
+                    .map(|view| view.id);
+                if let Some(plan) = plan {
+                    state.open_view(plan);
+                } else {
+                    actions::new_plan(state, *id, false);
+                }
+                ui.close();
+            }
+        }
+        ui.separator();
+        if ui.button(t!("status-manage-levels")).clicked() {
+            state.dialogs.levels = true;
+            ui.close();
+        }
+    });
+}
+
+fn status_layers(ui: &mut Ui, state: &mut AppState) {
+    use cc_engine::commands::layers;
+
+    let current = state.project().current_layer.clone();
+    let names: Vec<String> =
+        std::iter::once("0".to_string()).chain(state.project().model_layers.iter().cloned()).collect();
+    let hidden = state.project().hidden_layers.clone();
+    let selected_ids: Vec<u64> = state.selection.iter().map(|id| id.0).collect();
+    ui.menu_button(format!("{}: {current}", t!("status-layer")), |ui| {
+        for name in &names {
+            ui.horizontal(|ui| {
+                if ui.selectable_label(*name == current, name).clicked() {
+                    actions::run_command(state, layers::LayerActivate { name: name.clone() });
+                    ui.close();
+                }
+                let visible = !hidden.contains(name);
+                let eye = if visible { "◉" } else { "○" };
+                if ui.small_button(eye).on_hover_text(t!("layer-toggle-visibility")).clicked() {
+                    actions::run_command(state, layers::LayerSetVisible { name: name.clone(), visible: !visible });
+                }
+            });
+        }
+        if !selected_ids.is_empty() {
+            ui.separator();
+            if ui.button(t!("layer-assign-selection")).clicked() {
+                actions::run_command(state, layers::ElementsSetLayer { ids: selected_ids, layer: current.clone() });
+                ui.close();
+            }
+        }
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.add(egui::TextEdit::singleline(&mut state.dialogs.new_model_layer).hint_text(t!("layer-new-name")));
+            if ui.button(t!("layer-add")).clicked() {
+                let name = state.dialogs.new_model_layer.trim().to_string();
+                if actions::run_command(state, layers::LayerCreate { name: name.clone() }).is_some() {
+                    state.dialogs.new_model_layer.clear();
+                    actions::run_command(state, layers::LayerActivate { name });
+                }
+            }
+        });
+        if current != "0" {
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.add(
+                    egui::TextEdit::singleline(&mut state.dialogs.rename_model_layer)
+                        .hint_text(t!("layer-rename-name")),
+                );
+                if ui.button(t!("layer-rename")).clicked() {
+                    let new_name = state.dialogs.rename_model_layer.trim().to_string();
+                    if actions::run_command(state, layers::LayerRename { name: current.clone(), new_name }).is_some() {
+                        state.dialogs.rename_model_layer.clear();
+                    }
+                }
+            });
+            if ui.button(t!("layer-delete-current")).clicked() {
+                actions::run_command(state, layers::LayerDelete { name: current });
+                ui.close();
+            }
+        }
     });
 }
 

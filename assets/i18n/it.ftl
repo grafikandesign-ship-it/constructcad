@@ -291,6 +291,16 @@ status-length = Lunghezza: { $value }
 status-angle = Angolo: { $value }°
 status-selected = { $count } selezionati
 status-unsaved-file = (non salvato)
+status-level = Livello
+status-manage-levels = Gestisci livelli…
+status-layer = Layer
+layer-toggle-visibility = Mostra o nascondi il layer
+layer-assign-selection = Assegna la selezione al layer corrente
+layer-new-name = Nuovo layer
+layer-add = Aggiungi
+layer-rename-name = Nuovo nome
+layer-rename = Rinomina
+layer-delete-current = Elimina il layer corrente
 
 # Messaggi
 msg-plan-only = Questo strumento funziona nelle viste in pianta. Apri una pianta o una pianta del controsoffitto.
