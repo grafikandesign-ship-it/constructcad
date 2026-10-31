@@ -294,6 +294,7 @@ status-unsaved-file = (unsaved)
 status-level = Level
 status-manage-levels = Manage levels…
 status-layer = Layer
+layer-automatic = Automatic
 layer-toggle-visibility = Show or hide layer
 layer-assign-selection = Assign selection to current layer
 layer-new-name = New layer

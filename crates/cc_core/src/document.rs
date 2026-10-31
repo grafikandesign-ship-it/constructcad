@@ -17,6 +17,7 @@ struct Settings {
     element_layers: BTreeMap<ElementId, String>,
     hidden_layers: std::collections::BTreeSet<String>,
     current_layer: String,
+    automatic_layers_initialized: bool,
     units: crate::Units,
     pinned: std::collections::BTreeSet<ElementId>,
     joins: std::collections::BTreeSet<(ElementId, ElementId)>,
@@ -39,6 +40,7 @@ impl Settings {
             element_layers: p.element_layers.clone(),
             hidden_layers: p.hidden_layers.clone(),
             current_layer: p.current_layer.clone(),
+            automatic_layers_initialized: p.automatic_layers_initialized,
             units: p.units.clone(),
             pinned: p.pinned.clone(),
             joins: p.joins.clone(),
@@ -60,6 +62,7 @@ impl Settings {
         p.element_layers = self.element_layers;
         p.hidden_layers = self.hidden_layers;
         p.current_layer = self.current_layer;
+        p.automatic_layers_initialized = self.automatic_layers_initialized;
         p.units = self.units;
         p.pinned = self.pinned;
         p.joins = self.joins;
@@ -190,9 +193,15 @@ impl<'a> EditCtx<'a> {
     /// Insert an element. Its `id` must come from [`EditCtx::alloc_id`].
     pub fn add_element(&mut self, mut element: Element) -> ElementId {
         let id = element.id;
-        if self.project.current_layer != "0" {
+        let layer = if self.project.current_layer == "0" {
+            Project::automatic_layer(element.category()).map(str::to_string)
+        } else {
+            Some(self.project.current_layer.clone())
+        };
+        if let Some(layer) = layer {
             self.touch_settings();
-            self.project.element_layers.insert(id, self.project.current_layer.clone());
+            self.project.model_layers.insert(layer.clone());
+            self.project.element_layers.insert(id, layer);
         }
         // Copies of an element get their own persistent id.
         if element.uid.is_nil() || self.project.elements.values().any(|e| e.uid == element.uid && e.id != id) {

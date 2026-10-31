@@ -1594,6 +1594,7 @@ ph-not-demolished = Aucune
 status-level = Niveau
 status-manage-levels = Gérer les niveaux…
 status-layer = Calque
+layer-automatic = Automatique
 layer-toggle-visibility = Afficher ou masquer le calque
 layer-assign-selection = Affecter la sélection au calque courant
 layer-new-name = Nouveau calque

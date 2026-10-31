@@ -1594,6 +1594,7 @@ ph-not-demolished = Nenhuma
 status-level = Nível
 status-manage-levels = Gerenciar níveis…
 status-layer = Camada
+layer-automatic = Automático
 layer-toggle-visibility = Mostrar ou ocultar a camada
 layer-assign-selection = Atribuir seleção à camada atual
 layer-new-name = Nova camada

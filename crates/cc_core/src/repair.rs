@@ -108,6 +108,19 @@ impl Project {
     /// Remove or reset invalid data; returns the number of repairs made.
     pub fn repair(&mut self) -> usize {
         let mut repairs = usize::from(self.units.repair());
+        if !self.automatic_layers_initialized {
+            // Keep named assignments from older projects; move their
+            // unassigned architectural elements into category layers.
+            for element in self.elements.values() {
+                if !self.element_layers.contains_key(&element.id)
+                    && let Some(name) = Self::automatic_layer(element.category())
+                {
+                    self.model_layers.insert(name.into());
+                    self.element_layers.insert(element.id, name.into());
+                }
+            }
+            self.automatic_layers_initialized = true;
+        }
         let before = self.model_layers.len();
         self.model_layers.retain(|name| !name.trim().is_empty() && name != "0" && name.len() <= 80);
         repairs += before - self.model_layers.len();

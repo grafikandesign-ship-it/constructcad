@@ -1594,6 +1594,7 @@ ph-not-demolished = Brak
 status-level = Poziom
 status-manage-levels = Zarządzaj poziomami…
 status-layer = Warstwa
+layer-automatic = Automatycznie
 layer-toggle-visibility = Pokaż lub ukryj warstwę
 layer-assign-selection = Przypisz zaznaczenie do bieżącej warstwy
 layer-new-name = Nowa warstwa

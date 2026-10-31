@@ -1225,6 +1225,10 @@ pub fn options_bar(ui: &mut Ui, state: &mut AppState) {
 
 pub fn status_bar(ui: &mut Ui, state: &mut AppState) {
     ui.horizontal(|ui| {
+        status_levels(ui, state);
+        ui.separator();
+        status_layers(ui, state);
+        ui.separator();
         if let Some(c) = state.cursor {
             let coords = format!("X {:>9}  Y {:>9}", format::meters(c.x), format::meters(c.y));
             ui.label(RichText::new(coords).monospace().color(PALETTE.text_muted));
@@ -1259,10 +1263,6 @@ pub fn status_bar(ui: &mut Ui, state: &mut AppState) {
                 .unwrap_or_else(|| t!("status-unsaved-file"));
             let dirty = if state.session.doc.is_dirty() { " *" } else { "" };
             ui.label(RichText::new(format!("{file}{dirty}")).color(PALETTE.text_faint));
-            ui.separator();
-            status_layers(ui, state);
-            ui.separator();
-            status_levels(ui, state);
         });
     });
 }
@@ -1303,10 +1303,12 @@ fn status_layers(ui: &mut Ui, state: &mut AppState) {
         std::iter::once("0".to_string()).chain(state.project().model_layers.iter().cloned()).collect();
     let hidden = state.project().hidden_layers.clone();
     let selected_ids: Vec<u64> = state.selection.iter().map(|id| id.0).collect();
-    ui.menu_button(format!("{}: {current}", t!("status-layer")), |ui| {
+    let current_label = if current == "0" { t!("layer-automatic") } else { current.clone() };
+    ui.menu_button(format!("{}: {current_label}", t!("status-layer")), |ui| {
         for name in &names {
             ui.horizontal(|ui| {
-                if ui.selectable_label(*name == current, name).clicked() {
+                let label = if name == "0" { format!("0 · {}", t!("layer-automatic")) } else { name.clone() };
+                if ui.selectable_label(*name == current, label).clicked() {
                     actions::run_command(state, layers::LayerActivate { name: name.clone() });
                     ui.close();
                 }

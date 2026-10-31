@@ -1595,6 +1595,7 @@ ph-not-demolished = Немає
 status-level = Рівень
 status-manage-levels = Керувати рівнями…
 status-layer = Шар
+layer-automatic = Автоматично
 layer-toggle-visibility = Показати або приховати шар
 layer-assign-selection = Призначити вибране поточному шару
 layer-new-name = Новий шар

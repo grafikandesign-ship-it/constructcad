@@ -22,6 +22,10 @@ fn layers_control_existing_and_new_elements_across_views() {
     let wall = ElementId(
         run(&mut session, "wall_create", json!({"start": [0.0, 0.0], "end": [4.0, 0.0]}))["id"].as_u64().unwrap(),
     );
+    assert_eq!(session.project().layer_of(wall), "A-Muri");
+    let door =
+        ElementId(run(&mut session, "door_create", json!({"wall": wall.0, "offset": 2.0}))["id"].as_u64().unwrap());
+    assert_eq!(session.project().layer_of(door), "A-Porte");
     run(&mut session, "layer_create", json!({"name": "Existing"}));
     run(&mut session, "elements_set_layer", json!({"ids": [wall.0], "layer": "Existing"}));
     assert_eq!(session.project().layer_of(wall), "Existing");
@@ -52,4 +56,22 @@ fn layers_control_existing_and_new_elements_across_views() {
     run(&mut session, "layer_delete", json!({"name": "Walls"}));
     assert_eq!(session.project().layer_of(wall), "0");
     assert_eq!(session.project().layer_of(next), "0");
+}
+
+#[test]
+fn legacy_architectural_elements_are_assigned_when_opened() {
+    let mut session = Session::default();
+    let wall = ElementId(
+        run(&mut session, "wall_create", json!({"start": [0.0, 0.0], "end": [4.0, 0.0]}))["id"].as_u64().unwrap(),
+    );
+    let mut legacy = session.project().clone();
+    legacy.model_layers.clear();
+    legacy.element_layers.clear();
+    legacy.automatic_layers_initialized = false;
+    let text = cc_core::to_ron(&legacy).unwrap();
+    let (loaded, repairs) = cc_core::from_ron_with_repairs(&text).unwrap();
+    assert_eq!(repairs, 0);
+    assert_eq!(loaded.layer_of(wall), "A-Muri");
+    assert!(loaded.model_layers.contains("A-Muri"));
+    assert!(loaded.automatic_layers_initialized);
 }

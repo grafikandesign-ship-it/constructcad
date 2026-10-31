@@ -53,6 +53,9 @@ pub struct Project {
     /// Layer used for newly created elements.
     #[serde(default = "default_model_layer")]
     pub current_layer: String,
+    /// Whether legacy elements have been assigned to automatic architectural layers.
+    #[serde(default)]
+    pub automatic_layers_initialized: bool,
     /// How quantities are displayed and typed.
     #[serde(default)]
     pub units: crate::Units,
@@ -109,6 +112,7 @@ impl Project {
             element_layers: Default::default(),
             hidden_layers: Default::default(),
             current_layer: default_model_layer(),
+            automatic_layers_initialized: true,
             units: crate::Units::default(),
             pinned: Default::default(),
             joins: Default::default(),
@@ -133,6 +137,28 @@ impl Project {
 
     pub fn layer_visible(&self, id: ElementId) -> bool {
         !self.hidden_layers.contains(self.layer_of(id))
+    }
+
+    /// Default drawing layer for architectural elements. Choosing a named
+    /// current layer overrides this mapping for newly created elements.
+    pub fn automatic_layer(category: Category) -> Option<&'static str> {
+        match category {
+            Category::Wall => Some("A-Muri"),
+            Category::Door => Some("A-Porte"),
+            Category::Window => Some("A-Finestre"),
+            Category::Floor => Some("A-Solai"),
+            Category::Ceiling => Some("A-Controsoffitti"),
+            Category::Roof => Some("A-Coperture"),
+            Category::Room => Some("A-Locali"),
+            Category::Grid => Some("A-Assi"),
+            Category::Column => Some("S-Pilastri"),
+            Category::Beam => Some("S-Travi"),
+            Category::Stair => Some("A-Scale"),
+            Category::Railing => Some("A-Parapetti"),
+            Category::Component => Some("A-Componenti"),
+            Category::Foundation => Some("S-Fondazioni"),
+            _ => None,
+        }
     }
 
     /// A new project from the default architectural template (Brazilian Portuguese names).

@@ -1594,6 +1594,7 @@ ph-not-demolished = Keine
 status-level = Geschoss
 status-manage-levels = Geschosse verwalten…
 status-layer = Ebene
+layer-automatic = Automatisch
 layer-toggle-visibility = Ebene ein- oder ausblenden
 layer-assign-selection = Auswahl der aktuellen Ebene zuweisen
 layer-new-name = Neue Ebene
