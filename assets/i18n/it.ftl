@@ -269,7 +269,7 @@ view-new-sheet = Tavola
 
 # Suggerimenti
 hint-shortcut = Scorciatoia
-hint-select = Fai clic per selezionare · trascina per spostare (Ctrl copia) · Spazio ruota o inverte · finestra: da sinistra a destra seleziona gli elementi contenuti, da destra a sinistra quelli intersecati
+hint-select = Fai clic per selezionare · trascina per spostare (Ctrl copia) · Spazio cambia l’asse del muro o ruota l’elemento · finestra: da sinistra a destra seleziona gli elementi contenuti, da destra a sinistra quelli intersecati
 hint-wall = Fai clic sul punto iniziale e sui successivi · digita una lunghezza + Enter · Shift = ortogonale · Spazio = asse del muro · Esc termina
 wall-mode-line = Retta
 wall-mode-arc = Arco
@@ -577,7 +577,7 @@ tx-move = Sposta
 tx-copy = Copia
 tx-modify = Modifica
 tx-rotate = Ruota
-msg-rotated = Selezione ruotata (Spazio: componenti e pilastri ruotano di 90°, porte e finestre si invertono)
+msg-rotated = Selezione modificata (Spazio: i muri cambiano asse, componenti e pilastri ruotano, porte e finestre si invertono)
 tx-change-type = Cambia tipo
 tx-modify-type = Modifica tipo
 tx-duplicate-type = Duplica tipo

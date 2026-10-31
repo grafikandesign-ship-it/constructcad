@@ -245,9 +245,18 @@ impl ConstructApp {
             let keys = (i.key_pressed(Key::Escape), i.key_pressed(Key::Delete), i.key_pressed(Key::Backspace));
             (keys.0, keys.1, keys.2, i.key_pressed(Key::Space), i.events.clone())
         });
-        // Space turns or flips the selection (tools use it for their own preview).
+        // Space cycles the selected wall's location line or turns other elements.
         if space && state.tool == Tool::Select && crate::tools::rotate_selection(state) {
-            state.message = t!("msg-rotated");
+            let location = (state.selection.len() == 1)
+                .then(|| state.selection.first())
+                .flatten()
+                .and_then(|id| state.project().element(*id))
+                .and_then(|el| el.as_wall())
+                .map(|wall| wall.location_line);
+            state.message = location.map_or_else(
+                || t!("msg-rotated"),
+                |line| t!("msg-wall-location-line", "line" => crate::i18n::tr(line.key())),
+            );
         }
         if escape {
             if !state.typed.is_empty() || state.typed.angle_active {

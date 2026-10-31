@@ -356,7 +356,16 @@ fn turning_and_pinned_elements() {
     let door = run(&mut s, "door_create", json!({"wall": wall["id"]}));
     let column = run(&mut s, "column_create", json!({"position": [3, 3], "rotation": 300}));
     let out = run(&mut s, "elements_turn", json!({"ids": [door["id"], column["id"], wall["id"]]}));
-    assert_eq!(out["changed"].as_array().unwrap().len(), 2, "walls do not turn");
+    assert_eq!(out["changed"].as_array().unwrap().len(), 3);
+    let wall_id = cc_core::ElementId(wall["id"].as_u64().unwrap());
+    assert_eq!(
+        s.project().element(wall_id).unwrap().as_wall().unwrap().location_line,
+        cc_core::LocationLine::CoreCenter
+    );
+    for expected in cc_core::LocationLine::ALL.into_iter().skip(2).chain([cc_core::LocationLine::Centerline]) {
+        run(&mut s, "elements_turn", json!({"ids": [wall["id"]]}));
+        assert_eq!(s.project().element(wall_id).unwrap().as_wall().unwrap().location_line, expected);
+    }
     assert_eq!(run(&mut s, "element_get", json!({"id": column["id"]}))["params"]["rotation_deg"], 30.0);
     assert_eq!(run(&mut s, "element_get", json!({"id": door["id"]}))["params"]["flip_hand"], true);
     for (facing, hand) in [(true, false), (true, true), (false, false)] {

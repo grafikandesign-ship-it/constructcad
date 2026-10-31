@@ -269,7 +269,7 @@ view-new-sheet = Folha
 
 # Dicas
 hint-shortcut = Atalho
-hint-select = Clique para selecionar · arraste para mover (Ctrl copia) · Espaço gira ou inverte · janela: esquerda-direita seleciona contidos, direita-esquerda seleciona cruzados
+hint-select = Clique para selecionar · arraste para mover (Ctrl copia) · Espaço muda a linha da parede ou gira elementos · janela: esquerda-direita seleciona contidos, direita-esquerda seleciona cruzados
 hint-wall = Clique o início e os próximos pontos · digite o comprimento + Enter · Shift = ortogonal · Espaço = linha de referência · Esc encerra
 wall-mode-line = Reta
 wall-mode-arc = Arco
@@ -566,7 +566,7 @@ tx-move = Mover
 tx-copy = Copiar
 tx-modify = Modificar
 tx-rotate = Girar
-msg-rotated = Seleção girada (Espaço: componentes e pilares giram 90°, portas e janelas invertem)
+msg-rotated = Seleção modificada (Espaço muda a linha das paredes, gira componentes e inverte aberturas)
 tx-change-type = Alterar tipo
 tx-modify-type = Modificar tipo
 tx-duplicate-type = Duplicar tipo

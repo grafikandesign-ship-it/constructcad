@@ -269,7 +269,7 @@ view-new-sheet = Plan
 
 # Hinweise
 hint-shortcut = Tastenkürzel
-hint-select = Klicken zum Auswählen · ziehen zum Verschieben (Strg kopiert) · Leertaste dreht oder spiegelt · Fenster: von links nach rechts wählt Umschlossenes, von rechts nach links Gekreuztes
+hint-select = Klicken zum Auswählen · ziehen zum Verschieben (Strg kopiert) · Leertaste wechselt die Wandbezugslinie oder dreht Elemente · Fenster: von links nach rechts wählt Umschlossenes, von rechts nach links Gekreuztes
 hint-wall = Start- und Folgepunkte klicken · Länge eingeben + Enter · Umschalt = orthogonal · Leertaste = Bezugslinie · Esc beendet
 wall-mode-line = Linie
 wall-mode-arc = Bogen
@@ -566,7 +566,7 @@ tx-move = Verschieben
 tx-copy = Kopieren
 tx-modify = Ändern
 tx-rotate = Drehen
-msg-rotated = Auswahl gedreht (Leertaste: Komponenten und Stützen drehen um 90°, Türen und Fenster werden gespiegelt)
+msg-rotated = Auswahl geändert (Leertaste wechselt Wandbezugslinien, dreht Komponenten und spiegelt Öffnungen)
 tx-change-type = Typ wechseln
 tx-modify-type = Typ ändern
 tx-duplicate-type = Typ duplizieren

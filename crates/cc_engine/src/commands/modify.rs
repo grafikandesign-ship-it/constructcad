@@ -607,9 +607,9 @@ impl Command for ElementMoveEnd {
     }
 }
 
-/// Turn elements a quarter: components and columns rotate 90° about their
-/// insertion point; doors cycle through both hinge and facing directions;
-/// windows flip to the other side of their wall (Space on a selection).
+/// Cycle selected elements with Space: walls change their location line;
+/// components and columns rotate 90°; doors cycle hinge and facing;
+/// windows flip to the other side of their wall.
 /// Others and pinned elements are left alone.
 #[derive(Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -630,7 +630,8 @@ impl Command for ElementsTurn {
                 matches!(
                     s.project().element(*id).map(|e| &e.kind),
                     Some(
-                        ElementKind::Component(_)
+                        ElementKind::Wall(_)
+                            | ElementKind::Component(_)
                             | ElementKind::Column(_)
                             | ElementKind::Door(_)
                             | ElementKind::Window(_)
@@ -638,10 +639,16 @@ impl Command for ElementsTurn {
                 )
             })
             .collect();
-        edit(s, t!("tx-rotate"), |e| {
+        let tx = if turnable.iter().any(|id| s.project().element(*id).is_some_and(|el| el.as_wall().is_some())) {
+            t!("tx-modify")
+        } else {
+            t!("tx-rotate")
+        };
+        edit(s, tx, |e| {
             for id in &turnable {
                 let Some(el) = e.element_mut(*id) else { continue };
                 match &mut el.kind {
+                    ElementKind::Wall(w) => w.location_line = w.location_line.next(),
                     ElementKind::Component(c) => c.rotation_deg = (c.rotation_deg + 90.0).rem_euclid(360.0),
                     ElementKind::Column(c) => c.rotation_deg = (c.rotation_deg + 90.0).rem_euclid(360.0),
                     ElementKind::Door(h) => {

@@ -269,7 +269,7 @@ view-new-sheet = Sheet
 
 # Hints
 hint-shortcut = Shortcut
-hint-select = Click to select · drag to move (Ctrl copies) · Space rotates or flips · window: left-to-right selects enclosed, right-to-left selects crossing
+hint-select = Click to select · drag to move (Ctrl copies) · Space cycles wall location lines or turns elements · window: left-to-right selects enclosed, right-to-left selects crossing
 hint-wall = Click the start and next points · type a length + Enter · Shift = orthogonal · Space = wall location line · Esc ends
 wall-mode-line = Line
 wall-mode-arc = Arc
@@ -577,7 +577,7 @@ tx-move = Move
 tx-copy = Copy
 tx-modify = Modify
 tx-rotate = Rotate
-msg-rotated = Selection rotated (Space: components and columns turn 90°, doors and windows flip)
+msg-rotated = Selection changed (Space cycles wall location lines, turns components and columns, and flips openings)
 tx-change-type = Change Type
 tx-modify-type = Modify Type
 tx-duplicate-type = Duplicate Type

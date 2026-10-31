@@ -486,6 +486,11 @@ fn snap(
         let risers = project.segments_at(level).filter(|(e, _)| e.level != level);
         ends.extend(risers.map(|(_, s)| s.start));
     }
+    // Shift is a hard horizontal/vertical constraint. Apply it before normal
+    // endpoint and wall snaps, which can otherwise pull the segment off axis.
+    if ortho && let Some(a) = anchor {
+        return orthogonal_snap(raw, a, &ends, &mids, &lines, scale);
+    }
     let nearest = |pts: &[DVec2]| {
         pts.iter().map(|p| (*p, p.distance(raw))).filter(|(_, d)| *d <= r).min_by(|a, b| a.1.total_cmp(&b.1))
     };
@@ -538,14 +543,10 @@ fn snap(
     if let Some(a) = anchor {
         let v = raw - a;
         let mut dir = v.normalize_or_zero();
-        if ortho {
-            dir = if v.x.abs() >= v.y.abs() { DVec2::new(v.x.signum(), 0.0) } else { DVec2::new(0.0, v.y.signum()) };
-        } else {
-            let ang = v.y.atan2(v.x).to_degrees();
-            let snapped = (ang / 15.0).round() * 15.0;
-            if (ang - snapped).abs() < 3.0 {
-                dir = DVec2::from_angle(snapped.to_radians());
-            }
+        let ang = v.y.atan2(v.x).to_degrees();
+        let snapped = (ang / 15.0).round() * 15.0;
+        if (ang - snapped).abs() < 3.0 {
+            dir = DVec2::from_angle(snapped.to_radians());
         }
         let len = (v.dot(dir) / step).round() * step;
         let p = a + dir * len;
@@ -582,6 +583,55 @@ fn snap(
         return Snap { point: q, kind: SnapKind::Alignment, guides: [Some((g.0, q)), None] };
     }
     Snap::at((raw / step).round() * step, SnapKind::Free)
+}
+
+/// Snap along the dominant global axis through `anchor` while Shift is held.
+fn orthogonal_snap(
+    raw: DVec2,
+    anchor: DVec2,
+    ends: &[DVec2],
+    mids: &[DVec2],
+    lines: &[(DVec2, DVec2)],
+    scale: f64,
+) -> Snap {
+    let delta = raw - anchor;
+    let axis = if delta.x.abs() >= delta.y.abs() { DVec2::X } else { DVec2::Y };
+    let radius = SNAP_PX / scale;
+    if let Some(point) = ends
+        .iter()
+        .copied()
+        .filter(|p| (*p - anchor).perp_dot(axis).abs() < 1e-9 && p.distance(raw) <= radius)
+        .min_by(|a, b| a.distance(raw).total_cmp(&b.distance(raw)))
+    {
+        return Snap::at(point, SnapKind::Endpoint);
+    }
+    if let Some(point) = mids
+        .iter()
+        .copied()
+        .filter(|p| (*p - anchor).perp_dot(axis).abs() < 1e-9 && p.distance(raw) <= radius)
+        .min_by(|a, b| a.distance(raw).total_cmp(&b.distance(raw)))
+    {
+        return Snap::at(point, SnapKind::Midpoint);
+    }
+    let on_wall = lines
+        .iter()
+        .filter_map(|(start, end)| {
+            let wall_dir = *end - *start;
+            if wall_dir.length_squared() < 1e-12 {
+                return None;
+            }
+            let t = polygon::line_intersect(anchor, axis, *start, wall_dir)?;
+            let point = anchor + axis * t;
+            let u = (point - *start).dot(wall_dir) / wall_dir.length_squared();
+            (u.is_finite() && (0.0..=1.0).contains(&u) && point.distance(raw) <= radius).then_some(point)
+        })
+        .min_by(|a, b| a.distance(raw).total_cmp(&b.distance(raw)));
+    if let Some(point) = on_wall {
+        return Snap::at(point, SnapKind::Intersection);
+    }
+    let step = round_step(scale);
+    let point = anchor + axis * ((delta.dot(axis) / step).round() * step);
+    Snap { point, kind: SnapKind::Alignment, guides: [Some((anchor, point)), None] }
 }
 
 fn on_lines(lines: &[(DVec2, DVec2)], raw: DVec2, r: f64) -> Option<DVec2> {
@@ -2595,8 +2645,8 @@ pub fn mirror_elements(state: &mut AppState, ids: &[ElementId], a: DVec2, b: DVe
     }
 }
 
-/// Space on a selection: components and columns turn 90° about their
-/// insertion point, doors and windows flip to the other side of the wall.
+/// Space on a selection: walls cycle their location line, components and
+/// columns turn 90°, and doors and windows cycle their orientation.
 /// Returns whether anything changed (one undo step).
 pub fn rotate_selection(state: &mut AppState) -> bool {
     let ids: Vec<ElementId> = state.selection.iter().copied().collect();
@@ -2719,6 +2769,34 @@ mod tests {
     }
 
     #[test]
+    fn shift_keeps_wall_segments_horizontal_or_vertical_before_other_snaps() {
+        let (project, level) = empty();
+        let anchor = DVec2::ZERO;
+        let off_axis_end = [DVec2::new(4.0, 0.04)];
+        let snap =
+            super::snap(&project, Some(level), DVec2::new(4.01, 0.035), Some(anchor), &off_axis_end, &[], SCALE, true);
+        assert_eq!(snap.point.y, 0.0);
+        assert!((snap.point.x - 4.0).abs() < 1e-9);
+        let aligned_end = [DVec2::new(4.03, 0.0)];
+        let snap =
+            super::snap(&project, Some(level), DVec2::new(4.04, 0.02), Some(anchor), &aligned_end, &[], SCALE, true);
+        assert_eq!(snap.kind, SnapKind::Endpoint);
+        assert_eq!(snap.point, aligned_end[0]);
+        let snap = orthogonal_snap(
+            DVec2::new(3.02, 0.08),
+            anchor,
+            &[],
+            &[],
+            &[(DVec2::new(3.0, -1.0), DVec2::new(3.0, 1.0))],
+            SCALE,
+        );
+        assert_eq!(snap.kind, SnapKind::Intersection);
+        assert_eq!(snap.point, DVec2::new(3.0, 0.0));
+        let snap = super::snap(&project, Some(level), DVec2::new(0.04, 4.01), Some(anchor), &[], &[], SCALE, true);
+        assert_eq!(snap.point.x, 0.0);
+    }
+
+    #[test]
     fn hosted_orientation_cycles_all_four_door_swing_directions() {
         let mut interaction = Interaction::default();
         assert_eq!(interaction.hosted_orientation(false), (false, false));
@@ -2808,9 +2886,13 @@ mod tests {
         assert!(
             matches!(state.project().element(door).map(|e| &e.kind), Some(ElementKind::Door(h)) if h.flip_hand && !h.flip_facing)
         );
-        // Nothing turnable selected: no undo step.
+        // A selected wall now cycles its location line in one undo step.
         state.selection = [wall].into_iter().collect();
-        assert!(!rotate_selection(&mut state));
+        let before = state.project().element(wall).unwrap().as_wall().unwrap().location_line;
+        let depth = state.session.doc.undo_depth();
+        assert!(rotate_selection(&mut state));
+        assert_eq!(state.session.doc.undo_depth(), depth + 1);
+        assert_eq!(state.project().element(wall).unwrap().as_wall().unwrap().location_line, before.next());
     }
 
     #[test]

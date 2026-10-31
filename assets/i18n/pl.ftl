@@ -269,7 +269,7 @@ view-new-sheet = Arkusz
 
 # Podpowiedzi
 hint-shortcut = Skrót
-hint-select = Kliknij, aby zaznaczyć · przeciągnij, aby przesunąć (Ctrl kopiuje) · Spacja obraca lub odwraca · okno: od lewej do prawej zaznacza zawarte, od prawej do lewej przecinane
+hint-select = Kliknij, aby zaznaczyć · przeciągnij, aby przesunąć (Ctrl kopiuje) · Spacja zmienia linię ściany lub obraca element · okno: od lewej do prawej zaznacza zawarte, od prawej do lewej przecinane
 hint-wall = Kliknij punkt początkowy i kolejne · wpisz długość + Enter · Shift = ortogonalnie · Spacja = linia odniesienia · Esc kończy
 wall-mode-line = Prosta
 wall-mode-arc = Łuk
@@ -566,7 +566,7 @@ tx-move = Przesuń
 tx-copy = Kopiuj
 tx-modify = Zmień
 tx-rotate = Obróć
-msg-rotated = Obrócono zaznaczenie (Spacja: komponenty i słupy obracają się o 90°, drzwi i okna są odwracane)
+msg-rotated = Zmieniono zaznaczenie (Spacja zmienia linię ścian, obraca komponenty i odwraca otwory)
 tx-change-type = Zmień typ
 tx-modify-type = Modyfikuj typ
 tx-duplicate-type = Duplikuj typ

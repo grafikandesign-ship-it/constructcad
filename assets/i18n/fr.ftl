@@ -269,7 +269,7 @@ view-new-sheet = Feuille
 
 # Indications
 hint-shortcut = Raccourci
-hint-select = Cliquez pour sélectionner · faites glisser pour déplacer (Ctrl copie) · Espace pivote ou retourne · fenêtre : de gauche à droite sélectionne ce qui est inclus, de droite à gauche ce qui est traversé
+hint-select = Cliquez pour sélectionner · faites glisser pour déplacer (Ctrl copie) · Espace change la ligne du mur ou pivote l’élément · fenêtre : de gauche à droite sélectionne ce qui est inclus, de droite à gauche ce qui est traversé
 hint-wall = Cliquez le point de départ et les suivants · saisissez une longueur + Entrée · Maj = orthogonal · Espace = ligne de référence du mur · Échap termine
 wall-mode-line = Droite
 wall-mode-arc = Arc
@@ -566,7 +566,7 @@ tx-move = Déplacer
 tx-copy = Copier
 tx-modify = Modifier
 tx-rotate = Pivoter
-msg-rotated = Sélection pivotée (Espace : les composants et les poteaux tournent de 90°, les portes et les fenêtres se retournent)
+msg-rotated = Sélection modifiée (Espace change la ligne des murs, pivote les composants et retourne les ouvertures)
 tx-change-type = Changer de type
 tx-modify-type = Modifier le type
 tx-duplicate-type = Dupliquer le type

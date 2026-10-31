@@ -908,7 +908,7 @@ No parameters.
 
 ### `elements_turn`
 
-*edit* — Turn elements a quarter: components and columns rotate 90° about their insertion point; doors cycle through both hinge and facing directions; windows flip to the other side of their wall (Space on a selection). Others and pinned elements are left alone.
+*edit* — Cycle selected elements with Space: walls change their location line; components and columns rotate 90°; doors cycle hinge and facing; windows flip to the other side of their wall. Others and pinned elements are left alone.
 
 | Parameter | Type | | Description |
 |---|---|---|---|
