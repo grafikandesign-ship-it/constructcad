@@ -983,33 +983,34 @@ pub fn options_bar(ui: &mut Ui, state: &mut AppState) {
             }
             Tool::Wall { .. } => {
                 ui.menu_button(t!("wall-presets-menu"), |ui| {
-                    for function in [cc_core::WallFunction::Exterior, cc_core::WallFunction::Interior] {
-                        ui.label(theme::muted(if function == cc_core::WallFunction::Exterior {
-                            t!("wall-presets-exterior")
-                        } else {
-                            t!("wall-presets-interior")
-                        }));
-                        for preset in
-                            cc_engine::commands::wall_presets::catalog().iter().filter(|p| p.function == function)
-                        {
-                            let installed = state
-                                .project()
-                                .types_of(Category::Wall)
-                                .find(|ty| ty.info.type_mark == preset.id)
-                                .map(|ty| ty.id);
-                            let selected = installed == state.tool.type_id();
-                            if ui.selectable_label(selected, crate::i18n::tr(preset.name_key)).clicked() {
-                                let command =
-                                    cc_engine::commands::wall_presets::WallPresetAdd { preset: preset.id.into() };
-                                if let Some(id) =
-                                    crate::actions::run_command(state, command).and_then(|o| o["id"].as_u64())
+                    for category in cc_engine::commands::wall_presets::WallPresetCategory::ALL {
+                        ui.menu_button(crate::i18n::tr(category.key()), |ui| {
+                            egui::ScrollArea::vertical().max_height(450.0).show(ui, |ui| {
+                                for preset in cc_engine::commands::wall_presets::catalog()
+                                    .iter()
+                                    .filter(|p| p.category == category)
                                 {
-                                    state.tool = state.tool.with_type(cc_core::ElementTypeId(id));
+                                    let installed = state
+                                        .project()
+                                        .types_of(Category::Wall)
+                                        .find(|ty| ty.info.type_mark == preset.id)
+                                        .map(|ty| ty.id);
+                                    let selected = installed == state.tool.type_id();
+                                    let label = format!("{} · {}", preset.name(), format::length(preset.thickness()));
+                                    if ui.selectable_label(selected, label).clicked() {
+                                        let command = cc_engine::commands::wall_presets::WallPresetAdd {
+                                            preset: preset.id.into(),
+                                        };
+                                        if let Some(id) =
+                                            crate::actions::run_command(state, command).and_then(|o| o["id"].as_u64())
+                                        {
+                                            state.tool = state.tool.with_type(cc_core::ElementTypeId(id));
+                                        }
+                                        ui.close();
+                                    }
                                 }
-                                ui.close();
-                            }
-                        }
-                        ui.separator();
+                            });
+                        });
                     }
                     ui.label(theme::muted(t!("wall-presets-hint")));
                 });

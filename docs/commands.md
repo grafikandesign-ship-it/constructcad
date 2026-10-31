@@ -204,7 +204,7 @@ No parameters.
 
 ### `wall_presets_list`
 
-*query* — List available exterior and interior wall presets and their installation state.
+*query* — List wall presets by category with their thickness and installation state.
 
 No parameters.
 
