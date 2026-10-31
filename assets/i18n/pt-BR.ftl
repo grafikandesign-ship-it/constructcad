@@ -270,10 +270,11 @@ view-new-sheet = Folha
 # Dicas
 hint-shortcut = Atalho
 hint-select = Clique para selecionar · arraste para mover (Ctrl copia) · Espaço gira ou inverte · janela: esquerda-direita seleciona contidos, direita-esquerda seleciona cruzados
-hint-wall = Clique o início e os próximos pontos · digite o comprimento + Enter · Shift = ortogonal · Esc encerra
+hint-wall = Clique o início e os próximos pontos · digite o comprimento + Enter · Shift = ortogonal · Espaço = linha de referência · Esc encerra
 wall-mode-line = Reta
 wall-mode-arc = Arco
-hint-wall-arc = Clique o início e o fim do arco, depois um ponto do arco · Esc encerra
+hint-wall-arc = Clique o início e o fim do arco, depois um ponto do arco · Espaço = linha de referência · Esc encerra
+msg-wall-location-line = Linha de referência da parede: {$line}
 hint-wall-arc-point = Clique um ponto do arco ou digite o raio e tecle Enter
 hint-hosted = Passe o cursor sobre uma parede e clique · Espaço alterna a orientação
 action-cycle-orientation = Alternar orientação (Espaço)

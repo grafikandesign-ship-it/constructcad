@@ -270,10 +270,11 @@ view-new-sheet = Tavola
 # Suggerimenti
 hint-shortcut = Scorciatoia
 hint-select = Fai clic per selezionare · trascina per spostare (Ctrl copia) · Spazio ruota o inverte · finestra: da sinistra a destra seleziona gli elementi contenuti, da destra a sinistra quelli intersecati
-hint-wall = Fai clic sul punto iniziale e sui successivi · digita una lunghezza + Enter · Shift = ortogonale · Esc termina
+hint-wall = Fai clic sul punto iniziale e sui successivi · digita una lunghezza + Enter · Shift = ortogonale · Spazio = asse del muro · Esc termina
 wall-mode-line = Retta
 wall-mode-arc = Arco
-hint-wall-arc = Fai clic sull'inizio e sulla fine dell'arco, poi su un punto dell'arco · Esc termina
+hint-wall-arc = Fai clic sull'inizio e sulla fine dell'arco, poi su un punto dell'arco · Spazio = asse del muro · Esc termina
+msg-wall-location-line = Asse del muro: {$line}
 hint-wall-arc-point = Fai clic su un punto dell'arco, oppure digita il raggio e premi Invio
 hint-hosted = Passa sopra un muro e fai clic · Spazio cambia l'orientamento
 action-cycle-orientation = Cambia orientamento (Spazio)

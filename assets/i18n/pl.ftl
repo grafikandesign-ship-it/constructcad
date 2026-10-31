@@ -270,10 +270,11 @@ view-new-sheet = Arkusz
 # Podpowiedzi
 hint-shortcut = Skrót
 hint-select = Kliknij, aby zaznaczyć · przeciągnij, aby przesunąć (Ctrl kopiuje) · Spacja obraca lub odwraca · okno: od lewej do prawej zaznacza zawarte, od prawej do lewej przecinane
-hint-wall = Kliknij punkt początkowy i kolejne · wpisz długość + Enter · Shift = ortogonalnie · Esc kończy
+hint-wall = Kliknij punkt początkowy i kolejne · wpisz długość + Enter · Shift = ortogonalnie · Spacja = linia odniesienia · Esc kończy
 wall-mode-line = Prosta
 wall-mode-arc = Łuk
-hint-wall-arc = Kliknij początek i koniec łuku, a potem punkt na łuku · Esc kończy
+hint-wall-arc = Kliknij początek i koniec łuku, a potem punkt na łuku · Spacja = linia odniesienia · Esc kończy
+msg-wall-location-line = Linia odniesienia ściany: {$line}
 hint-wall-arc-point = Kliknij punkt na łuku albo wpisz promień i naciśnij Enter
 hint-hosted = Najedź na ścianę i kliknij · Spacja zmienia orientację
 action-cycle-orientation = Zmień orientację (Spacja)

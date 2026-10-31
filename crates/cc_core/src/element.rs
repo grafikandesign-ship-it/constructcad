@@ -214,6 +214,17 @@ impl LocationLine {
         LocationLine::CoreInterior,
     ];
 
+    pub fn next(self) -> Self {
+        match self {
+            Self::Centerline => Self::CoreCenter,
+            Self::CoreCenter => Self::FinishExterior,
+            Self::FinishExterior => Self::FinishInterior,
+            Self::FinishInterior => Self::CoreExterior,
+            Self::CoreExterior => Self::CoreInterior,
+            Self::CoreInterior => Self::Centerline,
+        }
+    }
+
     pub fn key(self) -> &'static str {
         match self {
             LocationLine::Centerline => "loc-centerline",

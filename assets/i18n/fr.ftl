@@ -270,10 +270,11 @@ view-new-sheet = Feuille
 # Indications
 hint-shortcut = Raccourci
 hint-select = Cliquez pour sélectionner · faites glisser pour déplacer (Ctrl copie) · Espace pivote ou retourne · fenêtre : de gauche à droite sélectionne ce qui est inclus, de droite à gauche ce qui est traversé
-hint-wall = Cliquez le point de départ et les suivants · saisissez une longueur + Entrée · Maj = orthogonal · Échap termine
+hint-wall = Cliquez le point de départ et les suivants · saisissez une longueur + Entrée · Maj = orthogonal · Espace = ligne de référence du mur · Échap termine
 wall-mode-line = Droite
 wall-mode-arc = Arc
-hint-wall-arc = Cliquez le début et la fin de l'arc, puis un point de l'arc · Échap termine
+hint-wall-arc = Cliquez le début et la fin de l'arc, puis un point de l'arc · Espace = ligne de référence du mur · Échap termine
+msg-wall-location-line = Ligne de référence du mur : {$line}
 hint-wall-arc-point = Cliquez un point de l'arc, ou tapez le rayon et appuyez sur Entrée
 hint-hosted = Survolez un mur et cliquez · Espace change l'orientation
 action-cycle-orientation = Changer l'orientation (Espace)

@@ -270,10 +270,11 @@ view-new-sheet = Sheet
 # Hints
 hint-shortcut = Shortcut
 hint-select = Click to select · drag to move (Ctrl copies) · Space rotates or flips · window: left-to-right selects enclosed, right-to-left selects crossing
-hint-wall = Click the start and next points · type a length + Enter · Shift = orthogonal · Esc ends
+hint-wall = Click the start and next points · type a length + Enter · Shift = orthogonal · Space = wall location line · Esc ends
 wall-mode-line = Line
 wall-mode-arc = Arc
-hint-wall-arc = Click the start and end of the arc, then a point on it · Esc ends
+hint-wall-arc = Click the start and end of the arc, then a point on it · Space = wall location line · Esc ends
+msg-wall-location-line = Wall location line: {$line}
 hint-wall-arc-point = Click a point on the arc, or type the radius and press Enter
 hint-hosted = Hover over a wall and click · Space cycles the orientation
 action-cycle-orientation = Cycle orientation (Space)

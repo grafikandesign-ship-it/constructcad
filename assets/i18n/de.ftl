@@ -270,10 +270,11 @@ view-new-sheet = Plan
 # Hinweise
 hint-shortcut = Tastenkürzel
 hint-select = Klicken zum Auswählen · ziehen zum Verschieben (Strg kopiert) · Leertaste dreht oder spiegelt · Fenster: von links nach rechts wählt Umschlossenes, von rechts nach links Gekreuztes
-hint-wall = Start- und Folgepunkte klicken · Länge eingeben + Enter · Umschalt = orthogonal · Esc beendet
+hint-wall = Start- und Folgepunkte klicken · Länge eingeben + Enter · Umschalt = orthogonal · Leertaste = Bezugslinie · Esc beendet
 wall-mode-line = Linie
 wall-mode-arc = Bogen
-hint-wall-arc = Anfang und Ende des Bogens klicken, dann einen Punkt auf dem Bogen · Esc beendet
+hint-wall-arc = Anfang und Ende des Bogens klicken, dann einen Punkt auf dem Bogen · Leertaste = Bezugslinie · Esc beendet
+msg-wall-location-line = Bezugslinie der Wand: {$line}
 hint-wall-arc-point = Einen Punkt auf dem Bogen klicken oder den Radius eingeben und Enter drücken
 hint-hosted = Über eine Wand fahren und klicken · Leertaste wechselt die Ausrichtung
 action-cycle-orientation = Ausrichtung wechseln (Leertaste)

@@ -1,4 +1,4 @@
-use crate::{ElementTypeId, Uid};
+use crate::{ElementTypeId, LocationLine, Uid};
 use serde::{Deserialize, Serialize};
 
 /// BIM category of an element or element type.
@@ -570,6 +570,20 @@ impl ElementType {
                 (before, before + core)
             }
             _ => (0.0, self.thickness()),
+        }
+    }
+
+    /// Offset of a wall's location line from its body centerline, to the left.
+    pub fn wall_location_offset(&self, location: LocationLine) -> f64 {
+        let half = self.thickness() * 0.5;
+        let (core_ext, core_int) = self.core_range();
+        match location {
+            LocationLine::Centerline => 0.0,
+            LocationLine::FinishExterior => half,
+            LocationLine::FinishInterior => -half,
+            LocationLine::CoreExterior => half - core_ext,
+            LocationLine::CoreInterior => half - core_int,
+            LocationLine::CoreCenter => half - (core_ext + core_int) * 0.5,
         }
     }
 
