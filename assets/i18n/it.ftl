@@ -1601,3 +1601,17 @@ ph-delete-filter = Elimina filtro
 ph-default-filter-name = Filtro { $n }
 ph-filter-none = Nessuno
 ph-not-demolished = Nessuna
+action-import-reference = Importa PDF/DXF/JPG…
+action-manage-references = Riferimenti…
+cmd-desc-import-reference = Importa una planimetria PDF, JPG o DXF come riferimento nel piano attivo.
+cmd-desc-manage-references = Regola scala, posizione e visibilità dei riferimenti importati.
+file-filter-reference = Planimetrie PDF, DXF e JPG
+reference-import-title = Importa riferimento
+reference-manage-title = Riferimenti di pianta
+reference-width = Larghezza (m)
+reference-page = Pagina PDF
+reference-native-width = 0 = unità DXF originali
+reference-origin-x = Posizione X (m)
+reference-origin-y = Posizione Y (m)
+reference-visible = Visibile
+reference-remove = Rimuovi

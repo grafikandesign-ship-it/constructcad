@@ -21,6 +21,8 @@ fn done(state: &mut AppState, r: &egui::Response) {
 }
 
 pub fn show(ctx: &Context, state: &mut AppState) {
+    import_reference(ctx, state);
+    references(ctx, state);
     project_info(ctx, state);
     crate::units_dialog::show(ctx, state);
     levels(ctx, state);
@@ -36,6 +38,131 @@ pub fn show(ctx: &Context, state: &mut AppState) {
     error(ctx, state);
     about(ctx, state);
     update_report(ctx, state);
+}
+
+fn import_reference(ctx: &Context, state: &mut AppState) {
+    let Some(mut options) = state.dialogs.reference_import.clone() else { return };
+    let pdf = options.path.extension().and_then(|s| s.to_str()).is_some_and(|s| s.eq_ignore_ascii_case("pdf"));
+    let dxf = options.path.extension().and_then(|s| s.to_str()).is_some_and(|s| s.eq_ignore_ascii_case("dxf"));
+    let response = Dialog::new("reference-import", t!("reference-import-title")).width(440.0).show(
+        ctx,
+        |ui| {
+            ui.label(options.path.display().to_string());
+            if pdf {
+                ui.horizontal(|ui| {
+                    ui.label(t!("reference-page"));
+                    ui.add(egui::DragValue::new(&mut options.page).range(1..=10_000));
+                });
+            }
+            ui.horizontal(|ui| {
+                ui.label(t!("reference-width"));
+                ui.add(
+                    egui::DragValue::new(&mut options.width)
+                        .range(if dxf { 0.0..=100_000.0 } else { 0.001..=100_000.0 })
+                        .speed(0.1),
+                );
+            });
+            if dxf {
+                ui.label(t!("reference-native-width"));
+            }
+        },
+        |footer| {
+            footer.primary(t!("action-import-reference"));
+            footer.secondary(t!("action-cancel"));
+        },
+    );
+    if response.clicked == Some(0)
+        && let Some(view) = state.active_view
+    {
+        let command = cc_engine::commands::reference::ReferenceImport {
+            view: cc_engine::Ref::Id(view.0),
+            path: options.path.clone(),
+            width: (options.width > 0.0).then_some(options.width),
+            origin: None,
+            page: Some(options.page),
+        };
+        if actions::run_command(state, command).is_some() {
+            state.dialogs.reference_import = None;
+            state.dialogs.references = true;
+            state.view2d.entry(view).or_default().request_fit();
+            return;
+        }
+    }
+    if response.clicked == Some(1) || response.dismissed {
+        state.dialogs.reference_import = None;
+    } else {
+        state.dialogs.reference_import = Some(options);
+    }
+}
+
+fn references(ctx: &Context, state: &mut AppState) {
+    if !state.dialogs.references {
+        return;
+    }
+    let Some(id) = state.active_view else {
+        state.dialogs.references = false;
+        return;
+    };
+    let items: Vec<_> = state
+        .project()
+        .view(id)
+        .map(|v| v.references.iter().map(|r| (r.name.clone(), r.width, r.origin, r.visible)).collect())
+        .unwrap_or_default();
+    let mut remove = None;
+    let response = Dialog::new("references", t!("reference-manage-title")).width(480.0).show(
+        ctx,
+        |ui| {
+            egui::ScrollArea::vertical().max_height(460.0).show(ui, |ui| {
+                for (index, (name, width, origin, visible)) in items.iter().enumerate() {
+                    ui.separator();
+                    ui.label(name);
+                    let (mut width, mut x, mut y, mut visible) = (*width, origin.x, origin.y, *visible);
+                    let mut changed = false;
+                    ui.horizontal(|ui| {
+                        changed |= ui.checkbox(&mut visible, t!("reference-visible")).changed();
+                        if ui.button(t!("reference-remove")).clicked() {
+                            remove = Some(index);
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label(t!("reference-width"));
+                        changed |=
+                            ui.add(egui::DragValue::new(&mut width).range(0.001..=100_000.0).speed(0.1)).changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label(t!("reference-origin-x"));
+                        changed |= ui.add(egui::DragValue::new(&mut x).speed(0.1)).changed();
+                        ui.label(t!("reference-origin-y"));
+                        changed |= ui.add(egui::DragValue::new(&mut y).speed(0.1)).changed();
+                    });
+                    if changed {
+                        actions::run_command(
+                            state,
+                            cc_engine::commands::reference::ReferenceSet {
+                                view: cc_engine::Ref::Id(id.0),
+                                index,
+                                width: Some(width),
+                                origin: Some([x, y]),
+                                visible: Some(visible),
+                            },
+                        );
+                    }
+                }
+            });
+        },
+        |footer| {
+            footer.primary(t!("action-close"));
+        },
+    );
+    if let Some(index) = remove {
+        actions::run_command(
+            state,
+            cc_engine::commands::reference::ReferenceRemove { view: cc_engine::Ref::Id(id.0), index },
+        );
+    }
+    if response.clicked.is_some() || response.dismissed {
+        state.dialogs.references = false;
+    }
 }
 
 /// Footer of a data dialog: OK keeps the edits, Cancel (or Esc / close) undoes them.

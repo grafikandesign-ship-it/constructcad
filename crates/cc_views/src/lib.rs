@@ -29,7 +29,7 @@ pub use projected::{Frame, axonometric, elevation, section};
 pub use schedule::{Cell, Row, Table, field_value, schedule, schedule_where, to_csv};
 pub use sheet::{MARGIN, PlacedViewport, Sheet, TITLE_H, TITLE_W, TitleLabels, compose as compose_sheet};
 
-use cc_core::{Project, View, ViewKind};
+use cc_core::{Project, ReferenceData, View, ViewKind};
 use cc_geom::ModelGeometry;
 
 /// Drawing for any graphical view (`None` for schedules and sheets), with
@@ -93,6 +93,24 @@ pub fn generate_temporary(
         ViewKind::Diagram { panel } => diagram::panel_diagram(project, geom, *panel, view.scale, label),
         ViewKind::Schedule { .. } | ViewKind::Sheet { .. } => return None,
     };
+    if view.level().is_some() {
+        let mut references = Drawing2D { fit_elements: d.fit_elements, ..Drawing2D::default() };
+        for reference in view.references.iter().filter(|r| r.visible) {
+            if let ReferenceData::Lines { segments, native_width } = &reference.data {
+                let factor = reference.width / native_width;
+                for [a, b] in segments {
+                    references.line(
+                        reference.origin + *a * factor,
+                        reference.origin + *b * factor,
+                        LineStyle::Faint,
+                        None,
+                    );
+                }
+            }
+        }
+        references.prims.append(&mut d.prims);
+        d = references;
+    }
     annotate::dimensions(&mut d, project, view.id, view.scale);
     notes::notes(&mut d, project, view.id, view.scale);
     graphics::apply(&mut d, &mut graphics::Resolver::new(project, geom, view, temporary), view.scale);

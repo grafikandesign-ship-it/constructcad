@@ -253,6 +253,22 @@ pub fn open_path(state: &mut AppState, path: std::path::PathBuf) {
     }
 }
 
+/// Choose a PDF, JPEG or DXF and let the user set its initial scale.
+pub fn import_reference(state: &mut AppState) {
+    if state.active_level().is_none() {
+        state.message = t!("msg-open-plan");
+        return;
+    }
+    let Some(path) =
+        rfd::FileDialog::new().add_filter(t!("file-filter-reference"), &["pdf", "jpg", "jpeg", "dxf"]).pick_file()
+    else {
+        return;
+    };
+    let dxf = path.extension().and_then(|v| v.to_str()).is_some_and(|v| v.eq_ignore_ascii_case("dxf"));
+    state.dialogs.reference_import =
+        Some(crate::state::ReferenceImportDialog { path, page: 1, width: if dxf { 0.0 } else { 10.0 } });
+}
+
 /// Save the component `name` (all its types) to a `.ccomp` file.
 pub fn save_component(state: &mut AppState, name: &str) {
     let dialog = rfd::FileDialog::new()

@@ -1602,3 +1602,17 @@ layer-add = Añadir
 layer-rename-name = Nuevo nombre
 layer-rename = Renombrar
 layer-delete-current = Eliminar la capa actual
+action-import-reference = Importar PDF/DXF/JPG…
+action-manage-references = Referencias…
+cmd-desc-import-reference = Importar un plano PDF, JPG o DXF como referencia en la planta activa.
+cmd-desc-manage-references = Ajustar escala, posición y visibilidad de las referencias importadas.
+file-filter-reference = Planos PDF, DXF y JPG
+reference-import-title = Importar referencia
+reference-manage-title = Referencias de planta
+reference-width = Anchura (m)
+reference-page = Página PDF
+reference-native-width = 0 = unidades DXF originales
+reference-origin-x = Posición X (m)
+reference-origin-y = Posición Y (m)
+reference-visible = Visible
+reference-remove = Eliminar

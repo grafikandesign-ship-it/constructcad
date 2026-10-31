@@ -1601,3 +1601,17 @@ ph-delete-filter = Delete filter
 ph-default-filter-name = Filter { $n }
 ph-filter-none = None
 ph-not-demolished = None
+action-import-reference = Import PDF/DXF/JPG…
+action-manage-references = References…
+cmd-desc-import-reference = Import a PDF, JPG or DXF floor plan as a reference in the active plan.
+cmd-desc-manage-references = Adjust scale, position and visibility of imported references.
+file-filter-reference = PDF, DXF and JPG plans
+reference-import-title = Import reference
+reference-manage-title = Plan references
+reference-width = Width (m)
+reference-page = PDF page
+reference-native-width = 0 = original DXF units
+reference-origin-x = Position X (m)
+reference-origin-y = Position Y (m)
+reference-visible = Visible
+reference-remove = Remove

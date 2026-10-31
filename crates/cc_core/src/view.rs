@@ -214,6 +214,33 @@ pub struct View {
     /// Which statuses the view shows, and how (`None`: all, by category).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phase_filter: Option<crate::PhaseFilterId>,
+    /// Imported 2D drawings shown behind this plan, embedded in the project.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub references: Vec<PlanReference>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlanReference {
+    pub name: String,
+    /// Bottom-left corner in plan meters.
+    pub origin: DVec2,
+    /// Width in plan meters; height follows the image aspect ratio.
+    pub width: f64,
+    #[serde(default = "reference_visible")]
+    pub visible: bool,
+    pub data: ReferenceData,
+}
+
+fn reference_visible() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ReferenceData {
+    /// JPEG or PNG encoded bytes, base64 encoded for the RON project file.
+    Image { mime: String, encoded: String, pixels: [u32; 2] },
+    /// Segments in drawing units, normalized to meters at import time.
+    Lines { segments: Vec<[DVec2; 2]>, native_width: f64 },
 }
 
 impl ViewKind {
@@ -267,6 +294,7 @@ impl View {
             template: None,
             phase: Default::default(),
             phase_filter: None,
+            references: Vec::new(),
         }
     }
 

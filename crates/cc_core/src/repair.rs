@@ -417,6 +417,38 @@ impl Project {
         let view_ids: Vec<_> = self.views.keys().copied().collect();
         let type_ids: Vec<_> = self.types.keys().copied().collect();
         for view in self.views.values_mut() {
+            if view.level().is_none() {
+                repairs += view.references.len();
+                view.references.clear();
+            } else {
+                let before = view.references.len();
+                view.references.retain(|r| {
+                    r.name.len() <= 256
+                        && r.origin.is_finite()
+                        && r.width.is_finite()
+                        && r.width > 0.0
+                        && r.width <= 100_000.0
+                        && match &r.data {
+                            crate::ReferenceData::Image { encoded, pixels, .. } => {
+                                encoded.len() <= 44_000_000
+                                    && pixels[0] > 0
+                                    && pixels[1] > 0
+                                    && u64::from(pixels[0]) * u64::from(pixels[1]) <= 40_000_000
+                            }
+                            crate::ReferenceData::Lines { segments, native_width } => {
+                                segments.len() <= 200_000
+                                    && native_width.is_finite()
+                                    && *native_width > 0.0
+                                    && segments.iter().all(|s| s.iter().all(|p| p.is_finite()))
+                            }
+                        }
+                });
+                repairs += before - view.references.len();
+                if view.references.len() > 50 {
+                    repairs += view.references.len() - 50;
+                    view.references.truncate(50);
+                }
+            }
             match &mut view.kind {
                 ViewKind::Sheet { viewports, .. } => {
                     let before = viewports.len();

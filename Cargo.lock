@@ -646,6 +646,7 @@ dependencies = [
 name = "cc_app"
 version = "0.4.2"
 dependencies = [
+ "base64 0.22.1",
  "cc_core",
  "cc_engine",
  "cc_geom",
@@ -659,6 +660,7 @@ dependencies = [
  "egui_kittest",
  "env_logger",
  "glam",
+ "image",
  "log",
  "png 0.18.1",
  "resvg",
@@ -694,11 +696,13 @@ dependencies = [
 name = "cc_engine"
 version = "0.4.2"
 dependencies = [
+ "base64 0.22.1",
  "cc_core",
  "cc_geom",
  "cc_ifc",
  "cc_views",
  "glam",
+ "image",
  "schemars",
  "serde",
  "serde_json",
@@ -1915,6 +1919,8 @@ dependencies = [
  "num-traits",
  "png 0.18.1",
  "tiff",
+ "zune-core",
+ "zune-jpeg",
 ]
 
 [[package]]

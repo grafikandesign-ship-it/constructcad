@@ -18,6 +18,7 @@ pub mod phases;
 pub mod project;
 pub mod query;
 pub mod rebar;
+pub mod reference;
 pub mod structure;
 pub mod types;
 pub mod views;

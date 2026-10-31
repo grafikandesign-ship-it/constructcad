@@ -37,6 +37,8 @@ pub enum PendingAction {
 
 #[derive(Default)]
 pub struct Dialogs {
+    pub reference_import: Option<ReferenceImportDialog>,
+    pub references: bool,
     /// Name entered in the status-bar layer menu.
     pub new_model_layer: String,
     pub rename_model_layer: String,
@@ -77,6 +79,14 @@ pub struct Dialogs {
     pub phases: Option<crate::phases_dialog::PhasesDialog>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ReferenceImportDialog {
+    pub path: std::path::PathBuf,
+    pub page: u32,
+    /// Zero means DXF native units.
+    pub width: f64,
+}
+
 pub struct AppState {
     /// The engine session: document, derived geometry, drawings and sheets.
     pub session: Session,
@@ -94,6 +104,8 @@ pub struct AppState {
     pub last_floor_plan: Option<ViewId>,
     pub view2d: HashMap<ViewId, View2DState>,
     pub view3d: HashMap<ViewId, View3DState>,
+    /// Decoded textures for PDF/JPEG plan references, keyed by view and index.
+    pub reference_textures: HashMap<(ViewId, usize), (u64, egui::TextureHandle)>,
     /// Views the dock should open (or focus) this frame.
     pub open_requests: Vec<ViewId>,
     pub dialogs: Dialogs,
@@ -173,6 +185,7 @@ impl AppState {
             last_floor_plan: None,
             view2d: HashMap::new(),
             view3d: HashMap::new(),
+            reference_textures: HashMap::new(),
             open_requests: Vec::new(),
             dialogs: Dialogs::default(),
             ribbon_tab: RibbonTab::default(),

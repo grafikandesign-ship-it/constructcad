@@ -4,9 +4,11 @@ use crate::icons::{self, Icon};
 use crate::paint::{PaintOptions, Xf, paint_drawing};
 use crate::state::AppState;
 use crate::theme::{self, PALETTE};
-use cc_core::ViewId;
-use egui::{Rect, Response, Sense, Ui};
+use base64::Engine as _;
+use cc_core::{PlanReference, ReferenceData, View, ViewId};
+use egui::{Color32, Painter, Rect, Response, Sense, Ui};
 use glam::DVec2;
+use std::hash::{Hash, Hasher};
 
 /// Screen points per paper millimeter at "sheet size" (96 points per inch).
 const POINTS_PER_MM: f64 = 96.0 / 25.4;
@@ -275,7 +277,19 @@ pub fn zoom(state: &mut AppState, view: ViewId, cmd: ZoomCommand, mm_scale: f64)
 
 /// Show a graphical 2D view and run the active tool on it.
 pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
-    let Some(view) = state.project().view(view_id).cloned() else { return };
+    let Some(source) = state.project().view(view_id) else { return };
+    // Tools need an owned view, but copying embedded images every frame is expensive.
+    let view = View {
+        id: source.id,
+        name: source.name.clone(),
+        scale: source.scale,
+        kind: source.kind.clone(),
+        graphics: source.graphics.clone(),
+        template: source.template,
+        phase: source.phase,
+        phase_filter: source.phase_filter,
+        references: Vec::new(),
+    };
     let drawing = state.drawing(view_id).unwrap_or_default();
     let (resp, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
     let rect = resp.rect;
@@ -283,7 +297,27 @@ pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
 
     let st = state.view2d.entry(view_id).or_default();
     if st.needs_fit(rect) {
-        match drawing.fit_bounds() {
+        let mut bounds = drawing.fit_bounds();
+        let references = state.session.doc.project.view(view_id).map(|v| v.references.as_slice()).unwrap_or_default();
+        for reference in references.iter().filter(|r| r.visible) {
+            let height = match &reference.data {
+                ReferenceData::Image { pixels, .. } if pixels[0] > 0 => {
+                    reference.width * f64::from(pixels[1]) / f64::from(pixels[0])
+                }
+                ReferenceData::Lines { segments, native_width } => {
+                    let max_y = segments.iter().flat_map(|s| s.iter()).map(|p| p.y).fold(0.0_f64, f64::max);
+                    max_y * reference.width / native_width
+                }
+                _ => 0.0,
+            };
+            let lo = reference.origin;
+            let hi = lo + DVec2::new(reference.width, height);
+            bounds = Some(match bounds {
+                Some((a, b)) => (a.min(lo), b.max(hi)),
+                None => (lo, hi),
+            });
+        }
+        match bounds {
             Some(b) if b.1.distance(b.0) > 0.5 => st.fit(b, rect),
             _ => {
                 st.center = DVec2::new(5.0, 4.0);
@@ -298,6 +332,9 @@ pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
 
     let opts = PaintOptions { highlight: &state.selection, px_per_mm, mono: None, only: None };
     paint_drawing(&painter, &drawing, &xf, &opts);
+    if let Some(references) = state.session.doc.project.view(view_id).map(|v| v.references.as_slice()) {
+        paint_references(&painter, view_id, references, &mut state.reference_textures, &xf);
+    }
 
     if let Some(p) = resp.hover_pos() {
         state.cursor = Some(xf.to_world(p));
@@ -314,6 +351,54 @@ pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
     let nav = state.view2d.get(&view_id).map(View2DState::nav).unwrap_or_default();
     if let Some(cmd) = view_toolbar(ui, state.zoom_default, rect, view_id, Some(view.scale), nav) {
         zoom(state, view_id, cmd, 1000.0 / view.scale.max(1) as f64);
+    }
+}
+
+fn paint_references(
+    painter: &Painter,
+    view_id: ViewId,
+    references: &[PlanReference],
+    textures: &mut std::collections::HashMap<(ViewId, usize), (u64, egui::TextureHandle)>,
+    xf: &Xf,
+) {
+    for (index, reference) in references.iter().enumerate().filter(|(_, r)| r.visible) {
+        let ReferenceData::Image { encoded, pixels, .. } = &reference.data else { continue };
+        if pixels[0] == 0 {
+            continue;
+        }
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        encoded.len().hash(&mut hasher);
+        encoded.get(..encoded.len().min(128)).hash(&mut hasher);
+        encoded.get(encoded.len().saturating_sub(128)..).hash(&mut hasher);
+        let fingerprint = hasher.finish();
+        let key = (view_id, index);
+        if textures.get(&key).is_none_or(|(old, _)| *old != fingerprint) {
+            let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(encoded) else { continue };
+            let Ok(image) = image::load_from_memory(&bytes) else { continue };
+            let rgba = image.to_rgba8();
+            let size = [rgba.width() as usize, rgba.height() as usize];
+            let color = egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_raw());
+            let texture = painter.ctx().load_texture(
+                format!("plan-reference-{}-{index}-{fingerprint}", view_id.0),
+                color,
+                egui::TextureOptions::LINEAR,
+            );
+            textures.insert(key, (fingerprint, texture));
+        }
+        if let Some((_, texture)) = textures.get(&key) {
+            let height = reference.width * f64::from(pixels[1]) / f64::from(pixels[0]);
+            let top_left = xf.to_screen(reference.origin + DVec2::new(0.0, height));
+            let bottom_right = xf.to_screen(reference.origin + DVec2::new(reference.width, 0.0));
+            let rect = Rect::from_two_pos(top_left, bottom_right);
+            if rect.intersects(painter.clip_rect()) {
+                painter.image(
+                    texture.id(),
+                    rect,
+                    Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
+                    Color32::from_white_alpha(90),
+                );
+            }
+        }
     }
 }
 

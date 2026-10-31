@@ -16,6 +16,8 @@ glam.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
+image.workspace = true
+base64.workspace = true
 sys-locale.workspace = true
 
 [lints]

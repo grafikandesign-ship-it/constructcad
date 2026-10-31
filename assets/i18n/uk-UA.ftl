@@ -1603,3 +1603,17 @@ layer-add = Додати
 layer-rename-name = Нова назва
 layer-rename = Перейменувати
 layer-delete-current = Видалити поточний шар
+action-import-reference = Імпортувати PDF/DXF/JPG…
+action-manage-references = Підкладки…
+cmd-desc-import-reference = Імпортувати план PDF, JPG або DXF як підкладку активного плану.
+cmd-desc-manage-references = Змінити масштаб, положення та видимість імпортованих підкладок.
+file-filter-reference = Плани PDF, DXF і JPG
+reference-import-title = Імпортувати підкладку
+reference-manage-title = Підкладки плану
+reference-width = Ширина (м)
+reference-page = Сторінка PDF
+reference-native-width = 0 = початкові одиниці DXF
+reference-origin-x = Позиція X (м)
+reference-origin-y = Позиція Y (м)
+reference-visible = Видима
+reference-remove = Видалити
