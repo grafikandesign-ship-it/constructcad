@@ -339,10 +339,12 @@ pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
     if let Some(p) = resp.hover_pos() {
         state.cursor = Some(xf.to_world(p));
     }
+    let calibrating = reference_calibration(&resp, &painter, state, view_id, &xf);
     let editing = !zooming
+        && !calibrating
         && (crate::text_tool::canvas(&resp, state, view_id, &xf, &drawing)
             || crate::dim_edit::canvas(ui, &resp, &painter, state, view_id, &xf, px_per_mm, &drawing));
-    if !zooming && !editing {
+    if !zooming && !editing && !calibrating {
         crate::tools::handle(ui, &resp, &painter, state, &view, &xf, &drawing);
     }
     crate::dim_edit::show(ui, state, view_id);
@@ -352,6 +354,74 @@ pub fn show(ui: &mut Ui, state: &mut AppState, view_id: ViewId) {
     if let Some(cmd) = view_toolbar(ui, state.zoom_default, rect, view_id, Some(view.scale), nav) {
         zoom(state, view_id, cmd, 1000.0 / view.scale.max(1) as f64);
     }
+}
+
+/// Pick two unsnapped points on the imported reference while ordinary tools pause.
+fn reference_calibration(resp: &Response, painter: &Painter, state: &mut AppState, view_id: ViewId, xf: &Xf) -> bool {
+    let Some(mut calibration) = state.reference_calibration.take() else { return false };
+    if calibration.view != view_id {
+        state.reference_calibration = Some(calibration);
+        return false;
+    }
+    let selected =
+        state.project().view(view_id).and_then(|v| v.references.get(calibration.index)).filter(|r| r.visible);
+    if selected.is_none() || (calibration.second.is_none() && painter.ctx().input(|i| i.key_pressed(egui::Key::Escape)))
+    {
+        state.message = crate::t!("reference-calibration-cancelled");
+        return true;
+    }
+    if let Some(reference) = selected {
+        let height = match &reference.data {
+            ReferenceData::Image { pixels, .. } if pixels[0] > 0 => {
+                reference.width * f64::from(pixels[1]) / f64::from(pixels[0])
+            }
+            ReferenceData::Lines { segments, native_width } => {
+                segments.iter().flat_map(|s| s.iter()).map(|p| p.y).fold(0.0_f64, f64::max) * reference.width
+                    / native_width
+            }
+            _ => 0.0,
+        };
+        let outline = Rect::from_two_pos(
+            xf.to_screen(reference.origin),
+            xf.to_screen(reference.origin + DVec2::new(reference.width, height)),
+        );
+        painter.rect_stroke(outline, 0.0, egui::Stroke::new(1.5, PALETTE.accent), egui::StrokeKind::Outside);
+    }
+    if calibration.second.is_none()
+        && resp.clicked_by(egui::PointerButton::Primary)
+        && let Some(pos) = resp.interact_pointer_pos()
+    {
+        let point = xf.to_world(pos);
+        match calibration.first {
+            None => {
+                calibration.first = Some(point);
+                state.message = crate::t!("reference-pick-second");
+            }
+            Some(first) if first.distance(point) * xf.scale >= 4.0 => {
+                calibration.second = Some(point);
+                calibration.distance = first.distance(point);
+            }
+            Some(_) => state.message = crate::t!("reference-points-too-close"),
+        }
+    }
+    let prompt = if calibration.first.is_some() {
+        crate::t!("reference-pick-second")
+    } else {
+        crate::t!("reference-pick-first")
+    };
+    let chip = Rect::from_min_size(resp.rect.left_top() + egui::vec2(12.0, 12.0), egui::vec2(365.0, 34.0));
+    painter.rect_filled(chip, 5.0, PALETTE.panel);
+    painter.text(chip.center(), egui::Align2::CENTER_CENTER, prompt, egui::FontId::proportional(13.0), PALETTE.text);
+    if let Some(first) = calibration.first {
+        let a = xf.to_screen(first);
+        painter.circle_filled(a, 4.0, PALETTE.accent);
+        if let Some(b) = calibration.second.map(|p| xf.to_screen(p)).or_else(|| resp.hover_pos()) {
+            painter.line_segment([a, b], egui::Stroke::new(1.5, PALETTE.accent));
+            painter.circle_stroke(b, 4.0, egui::Stroke::new(1.5, PALETTE.accent));
+        }
+    }
+    state.reference_calibration = Some(calibration);
+    true
 }
 
 fn paint_references(

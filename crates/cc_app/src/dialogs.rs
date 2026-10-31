@@ -21,6 +21,7 @@ fn done(state: &mut AppState, r: &egui::Response) {
 }
 
 pub fn show(ctx: &Context, state: &mut AppState) {
+    calibration_distance(ctx, state);
     import_reference(ctx, state);
     references(ctx, state);
     project_info(ctx, state);
@@ -109,6 +110,7 @@ fn references(ctx: &Context, state: &mut AppState) {
         .map(|v| v.references.iter().map(|r| (r.name.clone(), r.width, r.origin, r.visible)).collect())
         .unwrap_or_default();
     let mut remove = None;
+    let mut calibrate = None;
     let response = Dialog::new("references", t!("reference-manage-title")).width(480.0).show(
         ctx,
         |ui| {
@@ -120,6 +122,9 @@ fn references(ctx: &Context, state: &mut AppState) {
                     let mut changed = false;
                     ui.horizontal(|ui| {
                         changed |= ui.checkbox(&mut visible, t!("reference-visible")).changed();
+                        if ui.add_enabled(visible, egui::Button::new(t!("reference-calibrate"))).clicked() {
+                            calibrate = Some(index);
+                        }
                         if ui.button(t!("reference-remove")).clicked() {
                             remove = Some(index);
                         }
@@ -160,8 +165,53 @@ fn references(ctx: &Context, state: &mut AppState) {
             cc_engine::commands::reference::ReferenceRemove { view: cc_engine::Ref::Id(id.0), index },
         );
     }
+    if let Some(index) = calibrate {
+        state.reference_calibration =
+            Some(crate::state::ReferenceCalibration { view: id, index, first: None, second: None, distance: 1.0 });
+        state.dialogs.references = false;
+        state.view2d.entry(id).or_default().zoom_region = false;
+        state.message = t!("reference-pick-first");
+        return;
+    }
     if response.clicked.is_some() || response.dismissed {
         state.dialogs.references = false;
+    }
+}
+
+fn calibration_distance(ctx: &Context, state: &mut AppState) {
+    let Some(mut calibration) = state.reference_calibration.clone() else { return };
+    let (Some(first), Some(second)) = (calibration.first, calibration.second) else { return };
+    let measured = first.distance(second);
+    let response = Dialog::new("reference-calibration", t!("reference-calibrate-title")).width(370.0).show(
+        ctx,
+        |ui| {
+            ui.label(t!("reference-measured", "distance" => format!("{measured:.3}")));
+            ui.label(t!("reference-real-distance"));
+            ui.add(egui::DragValue::new(&mut calibration.distance).range(0.001..=100_000.0).speed(0.01).suffix(" m"));
+        },
+        |footer| {
+            footer.primary(t!("reference-apply"));
+            footer.secondary(t!("action-cancel"));
+        },
+    );
+    if response.clicked == Some(0) {
+        let command = cc_engine::commands::reference::ReferenceCalibrate {
+            view: cc_engine::Ref::Id(calibration.view.0),
+            index: calibration.index,
+            first: first.to_array(),
+            second: second.to_array(),
+            distance: calibration.distance,
+        };
+        if actions::run_command(state, command).is_some() {
+            state.reference_calibration = None;
+            state.dialogs.references = true;
+            return;
+        }
+    }
+    if response.clicked == Some(1) || response.dismissed {
+        state.reference_calibration = None;
+    } else {
+        state.reference_calibration = Some(calibration);
     }
 }
 

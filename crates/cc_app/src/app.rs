@@ -228,6 +228,13 @@ impl ConstructApp {
         if ctx.memory(|m| m.focused().is_some()) {
             return;
         }
+        if state.reference_calibration.is_some() {
+            if ctx.input(|i| i.key_pressed(Key::Escape)) {
+                state.reference_calibration = None;
+                state.message = t!("reference-calibration-cancelled");
+            }
+            return;
+        }
         if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F2)) {
             actions::open_default_plan(state);
         }

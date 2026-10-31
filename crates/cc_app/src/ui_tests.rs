@@ -471,6 +471,29 @@ fn graphics_dialog_hides_categories_and_cancel_undoes() {
     assert!(harness.state().dialogs.graphics.is_none());
 }
 
+#[test]
+fn reference_dialog_starts_two_point_calibration() {
+    let mut state = sample_state();
+    let plan = state.project().views_of(cc_core::ViewCategory::FloorPlan).next().unwrap().id;
+    state.active_view = Some(plan);
+    state.session.doc.project.views.get_mut(&plan).unwrap().references.push(cc_core::PlanReference {
+        name: "plan.jpg".into(),
+        origin: glam::DVec2::ZERO,
+        width: 10.0,
+        visible: true,
+        data: cc_core::ReferenceData::Lines { segments: vec![[glam::DVec2::ZERO, glam::DVec2::X]], native_width: 1.0 },
+    });
+    state.dialogs.references = true;
+    let mut harness = themed_harness(state, egui::vec2(850.0, 680.0), egui::Theme::Light, |ui, state| {
+        crate::dialogs::show(ui.ctx(), state)
+    });
+    harness.get_by_label(&t!("reference-calibrate")).click();
+    harness.run();
+    let calibration = harness.state().reference_calibration.as_ref().unwrap();
+    assert_eq!((calibration.view, calibration.index), (plan, 0));
+    assert!(!harness.state().dialogs.references);
+}
+
 /// The filters and view templates dialogs fit a tall window: their header
 /// and buttons stay on screen (a divider once stretched them past it).
 #[test]

@@ -87,6 +87,15 @@ pub struct ReferenceImportDialog {
     pub width: f64,
 }
 
+#[derive(Debug, Clone)]
+pub struct ReferenceCalibration {
+    pub view: ViewId,
+    pub index: usize,
+    pub first: Option<glam::DVec2>,
+    pub second: Option<glam::DVec2>,
+    pub distance: f64,
+}
+
 pub struct AppState {
     /// The engine session: document, derived geometry, drawings and sheets.
     pub session: Session,
@@ -106,6 +115,8 @@ pub struct AppState {
     pub view3d: HashMap<ViewId, View3DState>,
     /// Decoded textures for PDF/JPEG plan references, keyed by view and index.
     pub reference_textures: HashMap<(ViewId, usize), (u64, egui::TextureHandle)>,
+    /// Two picked points and the real distance entered for reference calibration.
+    pub reference_calibration: Option<ReferenceCalibration>,
     /// Views the dock should open (or focus) this frame.
     pub open_requests: Vec<ViewId>,
     pub dialogs: Dialogs,
@@ -186,6 +197,7 @@ impl AppState {
             view2d: HashMap::new(),
             view3d: HashMap::new(),
             reference_textures: HashMap::new(),
+            reference_calibration: None,
             open_requests: Vec::new(),
             dialogs: Dialogs::default(),
             ribbon_tab: RibbonTab::default(),

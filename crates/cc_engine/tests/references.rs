@@ -47,6 +47,25 @@ fn jpeg_reference_is_embedded_and_invalid_files_are_rejected() {
         matches!(&reference.data, ReferenceData::Image { mime, pixels, encoded } if mime == "image/jpeg" && *pixels == [16,8] && !encoded.is_empty())
     );
     assert_eq!(reference.width, 6.0);
+    assert!(
+        session
+            .execute(
+                "reference_calibrate",
+                json!({"view":view.0,"index":0,"first":[1.0,1.0],"second":[1.0,1.0],"distance":4.0})
+            )
+            .is_err()
+    );
+    session
+        .execute(
+            "reference_calibrate",
+            json!({"view":view.0,"index":0,"first":[1.0,1.0],"second":[3.0,1.0],"distance":4.0}),
+        )
+        .unwrap();
+    let calibrated = &session.project().view(view).unwrap().references[0];
+    assert_eq!(calibrated.width, 12.0);
+    assert_eq!(calibrated.origin.to_array(), [-1.0, -1.0]);
+    session.doc.undo();
+    assert_eq!(session.project().view(view).unwrap().references[0].width, 6.0);
     assert!(session.execute("reference_set", json!({"view":view.0,"index":0,"width":0.0})).is_err());
     assert_eq!(session.project().view(view).unwrap().references[0].width, 6.0);
 }

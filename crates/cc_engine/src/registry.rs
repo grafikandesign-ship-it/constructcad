@@ -105,6 +105,7 @@ registry![
         io::IfcImport,
         reference::ReferenceImport,
         reference::ReferenceSet,
+        reference::ReferenceCalibrate,
         reference::ReferenceRemove,
         io::IfcExport,
         io::SheetExport,

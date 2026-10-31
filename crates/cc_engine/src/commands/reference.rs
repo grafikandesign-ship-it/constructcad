@@ -131,6 +131,59 @@ impl Command for ReferenceSet {
     }
 }
 
+/// Calibrate a plan reference from two picked points and their real-world distance.
+/// The first point remains fixed while the reference scales.
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ReferenceCalibrate {
+    /// Floor plan id or name.
+    pub view: Ref,
+    /// Zero-based reference index within the view.
+    pub index: usize,
+    /// First picked point in current plan meters.
+    pub first: Point,
+    /// Second picked point in current plan meters.
+    pub second: Point,
+    /// Actual distance between the two points in meters.
+    pub distance: f64,
+}
+
+impl Command for ReferenceCalibrate {
+    const NAME: &'static str = "reference_calibrate";
+    const KIND: CommandKind = CommandKind::Edit;
+    fn run(self, s: &mut Session) -> Result<Value> {
+        let id = refs::view(s.project(), &self.view)?;
+        let first = refs::point(self.first)?;
+        let second = refs::point(self.second)?;
+        let distance = refs::positive(self.distance, "real distance")?;
+        let measured = first.distance(second);
+        if measured < 1e-6 || distance > 100_000.0 {
+            return Err(EngineError::invalid("choose distinct points and a real distance no greater than 100 km"));
+        }
+        let factor = distance / measured;
+        let reference = s
+            .project()
+            .view(id)
+            .and_then(|v| v.references.get(self.index))
+            .ok_or_else(|| EngineError::not_found("reference"))?;
+        let width = reference.width * factor;
+        let origin = first + (reference.origin - first) * factor;
+        if !origin.is_finite() || !width.is_finite() || !(0.001..=100_000.0).contains(&width) {
+            return Err(EngineError::invalid("the calibrated reference would have an invalid size or position"));
+        }
+        edit(s, "Calibrate plan reference".into(), |e| {
+            let reference = e
+                .view_mut(id)
+                .and_then(|v| v.references.get_mut(self.index))
+                .ok_or_else(|| EngineError::not_found("reference"))?;
+            reference.width = width;
+            reference.origin = origin;
+            Ok(())
+        })?;
+        Ok(json!({"view": id.0, "index": self.index, "width": width, "origin": origin.to_array()}))
+    }
+}
+
 /// Remove a plan reference; undo restores its embedded data and placement.
 #[derive(Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
