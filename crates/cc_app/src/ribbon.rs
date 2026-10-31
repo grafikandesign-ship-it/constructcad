@@ -982,6 +982,38 @@ pub fn options_bar(ui: &mut Ui, state: &mut AppState) {
                 ui.label(theme::muted(t!("hint-select")));
             }
             Tool::Wall { .. } => {
+                ui.menu_button(t!("wall-presets-menu"), |ui| {
+                    for function in [cc_core::WallFunction::Exterior, cc_core::WallFunction::Interior] {
+                        ui.label(theme::muted(if function == cc_core::WallFunction::Exterior {
+                            t!("wall-presets-exterior")
+                        } else {
+                            t!("wall-presets-interior")
+                        }));
+                        for preset in
+                            cc_engine::commands::wall_presets::catalog().iter().filter(|p| p.function == function)
+                        {
+                            let installed = state
+                                .project()
+                                .types_of(Category::Wall)
+                                .find(|ty| ty.info.type_mark == preset.id)
+                                .map(|ty| ty.id);
+                            let selected = installed == state.tool.type_id();
+                            if ui.selectable_label(selected, crate::i18n::tr(preset.name_key)).clicked() {
+                                let command =
+                                    cc_engine::commands::wall_presets::WallPresetAdd { preset: preset.id.into() };
+                                if let Some(id) =
+                                    crate::actions::run_command(state, command).and_then(|o| o["id"].as_u64())
+                                {
+                                    state.tool = state.tool.with_type(cc_core::ElementTypeId(id));
+                                }
+                                ui.close();
+                            }
+                        }
+                        ui.separator();
+                    }
+                    ui.label(theme::muted(t!("wall-presets-hint")));
+                });
+                ui.separator();
                 // Straight walls, or arcs through a third point.
                 let mut arc = state.wall_arc;
                 ui.selectable_value(&mut arc, false, t!("wall-mode-line")).on_hover_text(t!("hint-wall"));

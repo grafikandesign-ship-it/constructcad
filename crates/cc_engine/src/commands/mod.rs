@@ -22,6 +22,7 @@ pub mod reference;
 pub mod structure;
 pub mod types;
 pub mod views;
+pub mod wall_presets;
 
 use crate::error::{EngineError, Result};
 use crate::session::Session;

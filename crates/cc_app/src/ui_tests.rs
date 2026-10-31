@@ -52,6 +52,22 @@ fn ribbon_harness_sized(state: AppState, size: egui::Vec2) -> Harness<'static, A
     themed_harness(state, size, egui::Theme::Light, crate::ribbon::ribbon)
 }
 
+#[test]
+fn wall_preset_menu_adds_and_activates_an_interior_type() {
+    let mut state = sample_state();
+    let default_type = state.project().default_type(cc_core::Category::Wall).unwrap();
+    state.tool = crate::tools::Tool::Wall { type_id: default_type };
+    let mut harness = themed_harness(state, egui::vec2(1500.0, 180.0), egui::Theme::Light, crate::ribbon::options_bar);
+    harness.get_by_label(&t!("wall-presets-menu")).click();
+    harness.run();
+    harness.get_by_label(&t!("wall-preset-interior-masonry-12")).click();
+    harness.run();
+    let type_id = harness.state().tool.type_id().unwrap();
+    let ty = harness.state().project().element_type(type_id).unwrap();
+    assert_eq!(ty.info.type_mark, "WP-I01");
+    assert!((ty.thickness() - 0.12).abs() < 1e-9);
+}
+
 /// The command palette over an empty window.
 fn palette_harness(state: AppState) -> Harness<'static, AppState> {
     themed_harness(state, egui::vec2(800.0, 480.0), egui::Theme::Light, |ui, state| {

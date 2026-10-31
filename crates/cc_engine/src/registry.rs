@@ -113,6 +113,8 @@ registry![
         io::ScheduleExportCsv,
         io::ComponentLoad,
         io::ComponentSave,
+        wall_presets::WallPresetsList,
+        wall_presets::WallPresetAdd,
     ],
     "Queries" => [
         query::CategoriesList,
